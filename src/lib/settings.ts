@@ -45,7 +45,86 @@ export interface StoreSettings {
 }
 
 // Default settings from local JSON
-import DEFAULT_SETTINGS from './settings-store.json'
+const DEFAULT_SETTINGS: StoreSettings = {
+  announcement_top_tr: "🚚 3 AL 2 ÖDE FIRSATI! TÜM SİPARİŞLERDE ÜCRETSİZ KARGO + KAPIDA NAKİT ÖDEME!",
+  announcement_top_ar: "🚚 عرض 3 بسعر 2! شحن مجاني بالكامل لجميع الطلبات + الدفع عند الاستلام!",
+  ticker_items: [
+    {
+      tr: "3 Al 2 Öde Fırsatını Kaçırma!",
+      ar: "لا تفوت عرض اشترِ 3 واحصل على 2 مجاناً!"
+    },
+    {
+      tr: "Hayalindeki Tasarımı Kılıfına Taşı - Tarzını Sen Belirle!",
+      ar: "صمم كفر هاتفك بنفسك وعبر عن أسلوبك!"
+    },
+    {
+      tr: "Kapıda Ödeme ile Güvenli Alışveriş",
+      ar: "الدفع عند الاستلام لتسوق آمن وسهل!"
+    },
+    {
+      tr: "Yeni Duyuru",
+      ar: "إعلان متحرك جديد"
+    }
+  ],
+  hero_slides: [
+    {
+      title_tr: "Tarzınızı Yansıtan Kılıflar",
+      title_ar: "كفرات تعبر عن شخصيتك وأناقتك",
+      desc_tr: "iPhone, Samsung ve tüm popüler modeller için darbe emici, yüksek kaliteli özel tasarım telefon kılıfları.",
+      desc_ar: "كفرات حماية فائقة ومقاومة للصدمات مصممة خصيصاً لأجهزة آيفون، سامسونج وكافة الهواتف بأشكال فريدة.",
+      btn_tr: "Koleksiyonu Keşfet",
+      btn_ar: "اكتشف المجموعة"
+    },
+    {
+      title_tr: "Kişiye Özel Kılıf Tasarla 🎨",
+      title_ar: "صمم كفر هاتفك على ذوقك 🎨",
+      desc_tr: "İsminizi, plakanızı veya en sevdiğiniz fotoğrafı ekleyerek tamamen size özel bir kılıf hazırlayın.",
+      desc_ar: "أضف اسمك، لوحة سيارتك المفضلة أو صورتك الشخصية لنصنع لك كفراً مخصصاً لك بالكامل.",
+      btn_tr: "Kendin Tasarla",
+      btn_ar: "صمم كفرك الآن"
+    }
+  ],
+  promo_banner: {
+    pre_tr: "Kişiye Özel Tasarım",
+    pre_ar: "طلب مخصص بالكامل",
+    title_tr: "Aracınızın Plakası ve Adı Kılıfınızda Parlasın!",
+    title_ar: "أضف اسمك وهاتف سيارتك في كفر مخصص!",
+    desc_tr: "Favori araba markanızı seçin, adınızı ve plakanızı yazarak tamamen size ait eşsiz kılıfı hemen hazırlayalım.",
+    desc_ar: "اختر شعار ماركة سيارتك، اكتب لوحتك الخاصة واجعل هاتفك فريداً ومميزاً.",
+    btn_tr: "Kendin Tasarla 🎨",
+    btn_ar: "صمم كفرك الخاص الآن 🎨"
+  },
+  trust_features: [
+    {
+      title_tr: "Premium Koruma",
+      title_ar: "حماية فائقة ومتانة",
+      desc_tr: "Darbe emici, çizilmeye dayanıklı çift katmanlı yapı.",
+      desc_ar: "كفرات مزدوجة الطبقات مقاومة للخدش والسقوط",
+      icon: "ShieldCheck"
+    },
+    {
+      title_tr: "Birebir Uyum",
+      title_ar: "تطابق تام ومثالي",
+      desc_tr: "Hassas kesim delikler ve tuşlar ile tam uyum.",
+      desc_ar: "أزرار مرنة وتطابق دقيق لمخارج الشحن والكاميرا",
+      icon: "Smartphone"
+    },
+    {
+      title_tr: "Hızlı Kargo",
+      title_ar: "شحن وتوصيل مجاني",
+      desc_tr: "Tüm Türkiye'ye kargo ücretsiz! Adresinize teslim.",
+      desc_ar: "توصيل مجاني تماماً لجميع المدن + كود تتبع مباشر",
+      icon: "Compass"
+    }
+  ],
+  customer_gallery: [
+    "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=600&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1535303311164-664fc9ec6532?w=600&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1605787020600-b9ebd5df1d07?w=600&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1573148195900-7845dcb9b127?w=600&auto=format&fit=crop&q=80"
+  ]
+}
 
 export async function getStoreSettings(): Promise<StoreSettings> {
   if (typeof window !== 'undefined') {

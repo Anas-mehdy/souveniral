@@ -12,7 +12,7 @@ export interface Customer {
 }
 
 // Load default settings/fallbacks
-import DEFAULT_CUSTOMERS from './customers-store.json'
+const DEFAULT_CUSTOMERS: Customer[] = []
 
 // Helpers to read/write fallback file
 function readLocalCustomers(): Customer[] {

@@ -28,7 +28,7 @@ export interface Order {
 }
 
 // Load default settings/fallbacks
-import DEFAULT_ORDERS from './orders-store.json'
+const DEFAULT_ORDERS: Order[] = []
 
 // Helpers to read/write fallback file
 function readLocalOrders(): Order[] {
