@@ -416,7 +416,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
       name_ar: catNameAr,
       name_tr: catNameAr, // set Turkish category name to Arabic
       image_url: catImageUrl || null,
-      sort_order: parseInt(catSortOrder),
+      sort_order: parseInt(catSortOrder) || 0,
       parent_type: catParentType
     }
 
