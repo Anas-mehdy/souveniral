@@ -34,6 +34,27 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
   const t = translations[locale]
   const [currentSlide, setCurrentSlide] = useState(0)
 
+  // Client-side secure admin verification to prevent caching leaks
+  const [isAdminMode, setIsAdminMode] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search)
+      if (searchParams.get('edit') === 'true') {
+        fetch('/api/admin/auth-check')
+          .then(res => res.json())
+          .then(data => {
+            if (data.isAuthenticated) {
+              setIsAdminMode(true)
+            }
+          })
+          .catch(err => console.error('Auth check error:', err))
+      }
+    }
+  }, [])
+
+  const showAdminControls = isAdminMode
+
   // Dynamic values in state
   const [localSettings, setLocalSettings] = useState<StoreSettings>(settings)
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
@@ -334,7 +355,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
         </div>
 
         {/* Hero edit button (Floating overlay) */}
-        {isAdmin && (
+        {showAdminControls && (
           <button
             onClick={() => setEditingHero(true)}
             className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-[#0da19a] hover:bg-[#0b807b] text-white px-3 py-1.5 rounded-xl shadow-lg font-bold text-xs transition-transform cursor-pointer"
@@ -378,7 +399,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
 
 
         {/* Ticker edit button */}
-        {isAdmin && (
+        {showAdminControls && (
           <button
             onClick={() => setEditingTicker(true)}
             className="absolute top-1/2 -translate-y-1/2 right-4 z-20 flex items-center gap-1 bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded-lg shadow-md font-bold text-[10px] cursor-pointer"
@@ -404,7 +425,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
         ))}
 
         {/* Trust Features edit trigger */}
-        {isAdmin && (
+        {showAdminControls && (
           <button
             onClick={() => setEditingTrust(true)}
             className="absolute -top-3 right-4 z-20 flex items-center gap-1 bg-[#0da19a] hover:bg-[#0b807b] text-white px-2 py-1 rounded-lg shadow font-bold text-[10px] cursor-pointer"
@@ -482,7 +503,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
                 </Link>
 
                 {/* Edit Category badge overlay */}
-                {isAdmin && (
+                {showAdminControls && (
                   <button
                     onClick={(e) => {
                       e.preventDefault()
@@ -535,7 +556,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
               {locale === 'ar' ? 'مجموعة من صور وتصاميم الهواتف التي صممها عملاؤنا الكرام بأنفسهم' : 'Müşterilerimizin kendi hazırlayıp paylaştığı özel tasarım kılıf fotoğrafları'}
             </p>
           </div>
-          {isAdmin && (
+          {showAdminControls && (
             <button
               onClick={() => setGalleryModalOpen(true)}
               className="flex items-center gap-1.5 px-4 py-2 bg-slate-950 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 border border-slate-800 rounded-2xl text-xs font-bold transition-all shadow-md cursor-pointer"
@@ -603,7 +624,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-            {bestSellers.map(p => <ProductCard key={p.id} product={p} isAdmin={isAdmin} />)}
+            {bestSellers.map(p => <ProductCard key={p.id} product={p} isAdmin={showAdminControls} />)}
           </div>
         </section>
       )}
@@ -630,7 +651,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
         </Link>
 
         {/* Promo edit trigger */}
-        {isAdmin && (
+        {showAdminControls && (
           <button
             onClick={() => setEditingPromo(true)}
             className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-[#0da19a] hover:bg-[#0b807b] text-white px-2.5 py-1 rounded-lg shadow font-bold text-[10px] cursor-pointer"
@@ -660,7 +681,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-            {newestArrivals.map(p => <ProductCard key={p.id} product={p} isAdmin={isAdmin} />)}
+            {newestArrivals.map(p => <ProductCard key={p.id} product={p} isAdmin={showAdminControls} />)}
           </div>
         </section>
       )}

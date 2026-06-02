@@ -613,13 +613,25 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
             </span>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-800 bg-slate-950 hover:bg-slate-900 rounded-xl text-slate-300 hover:text-white transition-colors text-sm cursor-pointer"
-          >
-            <LogOut size={16} />
-            <span>تسجيل الخروج / Çıkış</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href="/?edit=true"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 border border-indigo-500/20 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 rounded-xl transition-all text-sm font-semibold cursor-pointer"
+            >
+              <ExternalLink size={16} />
+              <span>تعديل الصفحة الرئيسية 🏠 / Anasayfa Düzenle</span>
+            </a>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-800 bg-slate-950 hover:bg-slate-900 rounded-xl text-slate-300 hover:text-white transition-colors text-sm cursor-pointer"
+            >
+              <LogOut size={16} />
+              <span>تسجيل الخروج / Çıkış</span>
+            </button>
+          </div>
         </div>
       </header>
 
