@@ -436,7 +436,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
           <div className="flex overflow-x-auto flex-nowrap gap-4 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth w-full sm:grid sm:grid-cols-4 lg:grid-cols-7 sm:gap-4 md:gap-5 sm:pb-0 sm:overflow-visible pt-1 px-1">
             {(() => {
               const collections = localCategories.filter(cat => cat.parent_type === 'collections')
-              if (collections.length > 0) return collections
+              if (collections.length > 0) return collections.slice(0, 7)
 
               // Smart fallback list of slugs to show exactly 7 collections if database is not migrated yet
               const FALLBACK_SLUGS = [
