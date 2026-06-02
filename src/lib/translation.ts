@@ -4,15 +4,29 @@ export function hasArabicCharacters(text: string): boolean {
 
 export async function translateText(text: string, from: string, to: string): Promise<string> {
   if (!text || !text.trim()) return ''
+  
+  let processedText = text.trim()
+  if (from === 'ar') {
+    // Pre-process: Replace dialect "كفرات" / "كفر" with standard Arabic so translation API understands them
+    processedText = processedText.replace(/كفرات/g, 'حافظات هواتف')
+    processedText = processedText.replace(/كفر/g, 'حافظة هاتف')
+  }
+
   try {
     const res = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.trim())}&langpair=${from}|${to}&de=info@souveniral.com`
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(processedText)}&langpair=${from}|${to}&de=info@souveniral.com`
     )
     if (res.ok) {
       const data = await res.json()
       const translated = data.responseData?.translatedText
       if (translated) {
-        return translated
+        let resultText = translated.trim()
+        if (to === 'ar') {
+          // Post-process: Convert standard Arabic back to dialect "كفرات" / "كفر" matching the store's branding
+          resultText = resultText.replace(/(حافظات الهواتف|حافظات هواتف|أغطية الهواتف|أغطية هواتف)/g, 'كفرات')
+          resultText = resultText.replace(/(حافظة الهاتف|حافظة هاتف|غطاء الهاتف|غطاء هاتف)/g, 'كفر')
+        }
+        return resultText
       }
     }
   } catch (err) {
