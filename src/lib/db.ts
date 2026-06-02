@@ -79,10 +79,11 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 export async function adminGetAllProducts(): Promise<Product[]> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('products')
-    .select('*, category:categories(*), images:product_images(*), models:product_models(*)')
+    .select('*, category:categories(*), images:product_images(*)')
     .order('created_at', { ascending: false })
+  if (error) console.error('adminGetAllProducts error:', error)
   return (data as Product[]) ?? []
 }
 
