@@ -46,3 +46,6 @@ src/lib/orders-store.json
 src/lib/customers-store.json
 src/lib/settings-store.json
 scratch/
+
+# ─── Local image folders (uploaded to Supabase Storage, not needed in Git) ─────
+/سوريا/
