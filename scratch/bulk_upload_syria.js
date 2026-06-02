@@ -284,7 +284,7 @@ async function run() {
           name_tr: turkishTitle,
           description_ar: 'كفر حماية عالي الجودة بتصميم سوري مميز. تصميم مقاوم للخدوش والصدمات لحماية هاتفك بأناقة.',
           description_tr: 'Özel Suriye tasarımlı, yüksek kaliteli koruyucu telefon kılıfı. Çizilmelere ve darbelere karşı dayanıklı.',
-          price: 299.00,
+          price: 310.00,
           compare_price: 399.00,
           category_id: categoryId,
           is_active: true,
