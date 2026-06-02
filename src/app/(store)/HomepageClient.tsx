@@ -522,16 +522,23 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
         </section>
       )}
 
-       {/* ==================== INFRASTRUCTURE: MARQUEE CSS INJECTION ==================== */}
+             {/* ==================== INFRASTRUCTURE: MARQUEE CSS INJECTION ==================== */}
       <style>{`
         @keyframes galleryMarqueeScroll {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
+        @keyframes galleryMarqueeScrollRTL {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(50%); }
+        }
         .animate-gallery-marquee-scroll {
           display: flex;
           width: max-content;
           animation: galleryMarqueeScroll 18s linear infinite;
+        }
+        [dir="rtl"] .animate-gallery-marquee-scroll {
+          animation-name: galleryMarqueeScrollRTL;
         }
         .animate-gallery-marquee-scroll:hover {
           animation-play-state: paused;
