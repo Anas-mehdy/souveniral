@@ -37,9 +37,54 @@ export function Navbar({ settings, categories = [] }: { settings?: StoreSettings
   return (
     <nav className="bg-white border-b border-gray-100 sticky top-0 z-40 font-sans">
       {/* Announcement top header */}
-      <div className="bg-[#0da19a] text-white text-[10px] sm:text-xs font-bold py-1.5 text-center flex items-center justify-center gap-1">
-        <Sparkles size={12} />
-        <span>{topText}</span>
+      <div className="relative overflow-hidden bg-[#0da19a] text-white text-[10px] sm:text-xs font-bold py-1.5 flex select-none">
+        <style>{`
+          @keyframes marquee-to-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          @keyframes marquee-to-right {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+          }
+          .animate-marquee-left {
+            display: inline-flex;
+            white-space: nowrap;
+            animation: marquee-to-left 25s linear infinite;
+          }
+          .animate-marquee-right {
+            display: inline-flex;
+            white-space: nowrap;
+            animation: marquee-to-right 25s linear infinite;
+          }
+        `}</style>
+        <div className={locale === 'ar' ? 'animate-marquee-right' : 'animate-marquee-left'}>
+          <span className="flex items-center gap-1.5 px-8 flex-shrink-0">
+            <Sparkles size={12} /> {topText}
+          </span>
+          <span className="flex items-center gap-1.5 px-8 flex-shrink-0">
+            <Sparkles size={12} /> {topText}
+          </span>
+          <span className="flex items-center gap-1.5 px-8 flex-shrink-0">
+            <Sparkles size={12} /> {topText}
+          </span>
+          <span className="flex items-center gap-1.5 px-8 flex-shrink-0">
+            <Sparkles size={12} /> {topText}
+          </span>
+          {/* Repeated items to achieve seamless loop */}
+          <span className="flex items-center gap-1.5 px-8 flex-shrink-0">
+            <Sparkles size={12} /> {topText}
+          </span>
+          <span className="flex items-center gap-1.5 px-8 flex-shrink-0">
+            <Sparkles size={12} /> {topText}
+          </span>
+          <span className="flex items-center gap-1.5 px-8 flex-shrink-0">
+            <Sparkles size={12} /> {topText}
+          </span>
+          <span className="flex items-center gap-1.5 px-8 flex-shrink-0">
+            <Sparkles size={12} /> {topText}
+          </span>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
