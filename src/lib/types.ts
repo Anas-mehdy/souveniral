@@ -9,6 +9,8 @@ export interface Category {
   sort_order: number
   created_at: string
   parent_type?: 'collections' | 'trends' | 'none'
+  parent_id?: string | null
+  subcategories?: Category[]
 }
 
 export interface ProductImage {

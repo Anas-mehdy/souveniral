@@ -2,14 +2,22 @@
 -- Go to: https://supabase.com/dashboard/project/nywrftutioksevutcrpn/sql/new
 
 create table if not exists categories (
-  id         uuid primary key default gen_random_uuid(),
-  slug       text unique not null,
-  name_ar    text not null,
-  name_tr    text not null,
-  image_url  text,
-  sort_order int default 0,
-  created_at timestamptz default now()
+  id          uuid primary key default gen_random_uuid(),
+  slug        text unique not null,
+  name_ar     text not null,
+  name_tr     text not null,
+  image_url   text,
+  sort_order  int default 0,
+  parent_type text default 'collections',
+  parent_id   uuid references categories(id) on delete set null,
+  created_at  timestamptz default now()
 );
+
+-- Migration (run once in Supabase SQL Editor if table already exists):
+-- ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_type text DEFAULT 'collections';
+-- ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES categories(id) ON DELETE SET NULL;
+-- CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);
+
 
 create table if not exists products (
   id             uuid primary key default gen_random_uuid(),

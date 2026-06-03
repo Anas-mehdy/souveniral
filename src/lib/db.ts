@@ -4,9 +4,10 @@ import type { Category, Product } from './types'
 export async function getCategories(): Promise<Category[]> {
   const { data } = await supabase
     .from('categories')
-    .select('*')
+    .select('*, subcategories:categories!parent_id(*)')
+    .is('parent_id', null)
     .order('sort_order')
-  return data ?? []
+  return (data as Category[]) ?? []
 }
 
 export async function getProducts(opts?: {
@@ -88,11 +89,12 @@ export async function adminGetAllProducts(): Promise<Product[]> {
 }
 
 export async function adminGetAllCategories(): Promise<Category[]> {
+  // Fetch ALL categories (roots + children) flat — admin dashboard handles grouping itself
   const { data } = await supabaseAdmin
     .from('categories')
     .select('*')
     .order('sort_order')
-  return data ?? []
+  return (data as Category[]) ?? []
 }
 
 export async function adminCreateProduct(p: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'category' | 'images' | 'models'>): Promise<Product> {
@@ -115,7 +117,7 @@ export async function adminDeleteProduct(id: string): Promise<void> {
   if (error) throw error
 }
 
-export async function adminCreateCategory(c: Omit<Category, 'id' | 'created_at'>): Promise<Category> {
+export async function adminCreateCategory(c: Omit<Category, 'id' | 'created_at' | 'subcategories'>): Promise<Category> {
   const { data, error } = await supabaseAdmin
     .from('categories')
     .insert(c)
@@ -125,7 +127,7 @@ export async function adminCreateCategory(c: Omit<Category, 'id' | 'created_at'>
   return data as Category
 }
 
-export async function adminUpdateCategory(id: string, c: Partial<Category>): Promise<void> {
+export async function adminUpdateCategory(id: string, c: Partial<Omit<Category, 'subcategories'>>): Promise<void> {
   const { error } = await supabaseAdmin.from('categories').update(c).eq('id', id)
   if (error) throw error
 }

@@ -168,6 +168,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
   const [catUploading, setCatUploading] = useState(false)
   const [catSortOrder, setCatSortOrder] = useState('0')
   const [catParentType, setCatParentType] = useState<'collections' | 'trends' | 'none'>('collections')
+  const [catParentId, setCatParentId] = useState<string>('')
 
   // Form states - Models Selector
   const [selectedModels, setSelectedModels] = useState<{ brand: string; model_name: string }[]>([])
@@ -272,6 +273,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
     setCatImageUrl('')
     setCatSortOrder('0')
     setCatParentType('collections')
+    setCatParentId('')
     setCategoryModalMode('add')
     setCategoryModalOpen(true)
   }
@@ -284,6 +286,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
     setCatImageUrl(c.image_url ?? '')
     setCatSortOrder(c.sort_order.toString())
     setCatParentType(c.parent_type ?? 'collections')
+    setCatParentId(c.parent_id ?? '')
     setCategoryModalMode('edit')
     setCategoryModalOpen(true)
   }
@@ -417,7 +420,8 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
       name_tr: catNameAr, // set Turkish category name to Arabic
       image_url: catImageUrl || null,
       sort_order: parseInt(catSortOrder) || 0,
-      parent_type: catParentType
+      parent_type: catParentId ? 'none' as const : catParentType,
+      parent_id: catParentId || null
     }
 
     try {
@@ -931,6 +935,11 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
                           <div>
                             <p className="font-semibold text-white">{c.name_tr}</p>
                             <p className="text-xs text-slate-400 mt-0.5 dir-rtl text-right font-medium">{c.name_ar}</p>
+                            {c.parent_id && (
+                              <p className="text-[10px] text-indigo-400 mt-1 font-semibold">
+                                ↳ {categories.find(p => p.id === c.parent_id)?.name_ar ?? 'قسم فرعي'}
+                              </p>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap font-mono text-xs text-slate-400">
@@ -1592,11 +1601,33 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">القسم الأب / Üst Kategori</label>
+                <select
+                  value={catParentId}
+                  onChange={e => setCatParentId(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500 text-right dir-rtl"
+                >
+                  <option value="">بلا — قسم رئيسي / Üst Kategori Yok</option>
+                  {categories
+                    .filter(c => !c.parent_id && c.id !== selectedCategory?.id)
+                    .map(c => (
+                      <option key={c.id} value={c.id}>{c.name_ar}</option>
+                    ))}
+                </select>
+                {catParentId && (
+                  <p className="text-[10px] text-indigo-400 mt-1 font-semibold">
+                    ℹ️ القسم الفرعي لا يظهر في الصفحة الرئيسية — يظهر فقط تحت قسمه الأب
+                  </p>
+                )}
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1">تصنيف الأب / Kategori Türü</label>
                 <select
                   value={catParentType}
                   onChange={e => setCatParentType(e.target.value as any)}
-                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500 text-right dir-rtl"
+                  disabled={!!catParentId}
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500 text-right dir-rtl disabled:opacity-40"
                 >
                   <option value="collections">مجموعات / Koleksiyonlar</option>
                   <option value="trends">تريندات / Trendler</option>
