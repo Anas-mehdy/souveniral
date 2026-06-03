@@ -25,6 +25,14 @@ export function ProductsClient({ products, categories, total, page, limit, curre
   const [search, setSearch] = useState(currentSearch ?? '')
   const totalPages = Math.ceil(total / limit)
 
+  // Find active parent category (either the current category itself, or the parent of the current subcategory)
+  let activeParent = categories.find(c => c.slug === currentCategory)
+  if (!activeParent && currentCategory) {
+    activeParent = categories.find(c => 
+      c.subcategories?.some(sub => sub.slug === currentCategory)
+    )
+  }
+
   function navigate(params: Record<string, string | undefined>) {
     const sp = new URLSearchParams()
     if (params.category) sp.set('category', params.category)
@@ -56,13 +64,60 @@ export function ProductsClient({ products, categories, total, page, limit, curre
           className="px-4 py-3 border border-gray-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#0da19a] bg-white text-gray-800"
         >
           <option value="">{t.allProducts}</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.slug}>
-              {locale === 'ar' ? c.name_ar : c.name_tr}
-            </option>
-          ))}
+          {categories.flatMap(c => {
+            const items = [
+              <option key={c.id} value={c.slug} className="font-bold">
+                {locale === 'ar' ? c.name_ar : c.name_tr}
+              </option>
+            ]
+            if (c.subcategories && c.subcategories.length > 0) {
+              const sortedSubs = [...c.subcategories].sort((a, b) => a.sort_order - b.sort_order)
+              sortedSubs.forEach(sub => {
+                items.push(
+                  <option key={sub.id} value={sub.slug} className="text-gray-500">
+                    {locale === 'ar' ? `  — ${sub.name_ar}` : `  — ${sub.name_tr}`}
+                  </option>
+                )
+              })
+            }
+            return items
+          })}
         </select>
       </div>
+
+      {/* Subcategory Pills */}
+      {activeParent && activeParent.subcategories && activeParent.subcategories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-8 pb-3 border-b border-gray-100">
+          <button
+            onClick={() => navigate({ category: activeParent!.slug, search })}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              currentCategory === activeParent.slug
+                ? 'bg-[#0da19a] text-white shadow-sm'
+                : 'bg-white border border-gray-200 hover:border-[#0da19a] text-gray-600'
+            }`}
+          >
+            {locale === 'ar' ? 'الكل' : 'Hepsi'}
+          </button>
+          {[...activeParent.subcategories]
+            .sort((a, b) => a.sort_order - b.sort_order)
+            .map(sub => {
+              const isActive = currentCategory === sub.slug
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => navigate({ category: sub.slug, search })}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#0da19a] text-white shadow-sm'
+                      : 'bg-white border border-gray-200 hover:border-[#0da19a] text-gray-600'
+                  }`}
+                >
+                  {locale === 'ar' ? sub.name_ar : sub.name_tr}
+                </button>
+              )
+            })}
+        </div>
+      )}
 
       {/* Count */}
       <p className="text-xs text-gray-400 font-bold mb-6">{t.total}: {total}</p>
