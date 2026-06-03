@@ -28,7 +28,18 @@ export async function getProducts(opts?: {
       .select('id')
       .eq('slug', opts.categorySlug)
       .single()
-    if (cat) query = query.eq('category_id', cat.id)
+    if (cat) {
+      const { data: subcats } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('parent_id', cat.id)
+      
+      const catIds = [cat.id]
+      if (subcats && subcats.length > 0) {
+        subcats.forEach(sc => catIds.push(sc.id))
+      }
+      query = query.in('category_id', catIds)
+    }
   }
 
   if (opts?.search) {
