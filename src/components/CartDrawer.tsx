@@ -71,7 +71,7 @@ export function CartDrawer() {
                   </div>
 
                   {/* Info */}
-                  <div className="flex-1 flex flex-col justify-between min-w-0">
+                  <div className="flex-1 flex flex-col justify-between min-w-0 pe-6">
                     <div>
                       <h4 className="text-xs font-semibold text-gray-800 line-clamp-1">
                         {locale === 'ar' ? item.name_ar : item.name_tr}
