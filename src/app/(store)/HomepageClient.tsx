@@ -105,6 +105,11 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
   const [galleryUploading, setGalleryUploading] = useState(false)
   const [savingGalleryState, setSavingGalleryState] = useState(false)
 
+  // Collections List Edit State
+  const [editingCollectionsList, setEditingCollectionsList] = useState(false)
+  const [tempParentTypes, setTempParentTypes] = useState<Record<string, 'none' | 'collections' | 'trends'>>({})
+  const [savingCollectionsList, setSavingCollectionsList] = useState(false)
+
   // Populate category edit form fields
   useEffect(() => {
     if (editingCategory) {
@@ -183,6 +188,62 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
       alert('Network error: ' + (err as Error).message)
     } finally {
       setSavingGalleryState(false)
+    }
+  }
+
+  // Open collections list editor
+  function handleOpenCollectionsListEdit() {
+    const mapping: Record<string, 'none' | 'collections' | 'trends'> = {}
+    localCategories.forEach(cat => {
+      mapping[cat.id] = (cat.parent_type as any) || 'none'
+    })
+    setTempParentTypes(mapping)
+    setEditingCollectionsList(true)
+  }
+
+  // Save collections list choices
+  async function handleSaveCollectionsList() {
+    setSavingCollectionsList(true)
+    try {
+      const promises = []
+      const updatedCategoriesList = [...localCategories]
+      
+      for (const cat of localCategories) {
+        const currentType = cat.parent_type || 'none'
+        const targetType = tempParentTypes[cat.id] || 'none'
+        
+        if (currentType !== targetType) {
+          promises.push(
+            fetch(`/api/admin/categories/${cat.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ parent_type: targetType })
+            }).then(async res => {
+              if (!res.ok) {
+                const err = await res.json()
+                throw new Error(err.error || 'Failed to update category')
+              }
+            })
+          )
+          
+          // Update local categories state inline
+          const idx = updatedCategoriesList.findIndex(c => c.id === cat.id)
+          if (idx !== -1) {
+            updatedCategoriesList[idx] = { ...updatedCategoriesList[idx], parent_type: targetType }
+          }
+        }
+      }
+
+      if (promises.length > 0) {
+        await Promise.all(promises)
+      }
+      
+      setLocalCategories(updatedCategoriesList)
+      setEditingCollectionsList(false)
+    } catch (err: any) {
+      alert('Error updating categories: ' + err.message)
+    } finally {
+      setSavingCollectionsList(false)
     }
   }
 
@@ -448,10 +509,21 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
                 {locale === 'ar' ? 'اختر التشكيلة المميزة التي تعبر عن أسلوبك الفريد' : 'Tarzınıza en uygun kılıf kategorisini seçin'}
               </p>
             </div>
-            <Link href="/categories" className="text-xs font-bold text-[#0da19a] hover:underline flex items-center gap-1">
-              <span>{t.viewAll}</span>
-              <ArrowRight size={14} />
-            </Link>
+            <div className="flex items-center gap-3">
+              {showAdminControls && (
+                <button
+                  onClick={handleOpenCollectionsListEdit}
+                  className="flex items-center gap-1 bg-[#0da19a] hover:bg-[#0b807b] text-white px-2.5 py-1.5 rounded-xl shadow-md font-bold text-xs transition-colors cursor-pointer"
+                >
+                  <Settings size={13} />
+                  <span>تعديل المعروض / Kategorileri Seç</span>
+                </button>
+              )}
+              <Link href="/categories" className="text-xs font-bold text-[#0da19a] hover:underline flex items-center gap-1">
+                <span>{t.viewAll}</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
           </div>
 
           <div className="flex overflow-x-auto flex-nowrap gap-4 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth w-full sm:grid sm:grid-cols-4 lg:grid-cols-7 sm:gap-4 md:gap-5 sm:pb-0 sm:overflow-visible pt-1 px-1">
@@ -779,6 +851,80 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
               >
                 {savingCategory ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
                 <span>حفظ التعديلات / Kaydet</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AA. COLLECTIONS LIST EDIT DIALOG POPUP */}
+      {editingCollectionsList && (
+        <div className="fixed inset-0 bg-slate-950/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto space-y-4 text-white shadow-2xl scrollbar-none">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="font-black text-sm text-[#0da19a]">
+                {locale === 'ar' ? 'إدارة تصنيفات الصفحة الرئيسية' : 'Ana Sayfa Kategorileri Yönet'}
+              </h3>
+              <button onClick={() => setEditingCollectionsList(false)} className="p-1 hover:bg-slate-800 rounded text-slate-400 cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="text-[11px] text-slate-400 font-medium">
+              {locale === 'ar' 
+                ? 'اختر التصنيفات التي ترغب في عرضها في قسم "مجموعاتنا الخاصة" على الصفحة الرئيسية (بحد أقصى 7 أقسام يوصى بها لمظهر متناسق):' 
+                : 'Ana sayfadaki "Özel Koleksiyonlarımız" bölümünde gösterilmesini istediğiniz kategorileri seçin (düzenli bir görünüm için en fazla 7 adet önerilir):'}
+            </p>
+
+            <div className="space-y-2 py-2">
+              {localCategories.map(cat => {
+                const isChecked = tempParentTypes[cat.id] === 'collections'
+                return (
+                  <label 
+                    key={cat.id} 
+                    className="flex items-center justify-between p-3 bg-slate-950 hover:bg-slate-850 border border-slate-850 rounded-2xl cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {cat.image_url ? (
+                        <img src={cat.image_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-xs text-[#0da19a]">📂</div>
+                      )}
+                      <div className="text-start">
+                        <p className="text-xs font-bold text-white">{locale === 'ar' ? cat.name_ar : cat.name_tr}</p>
+                        <p className="text-[9px] text-slate-500 font-semibold">{locale === 'ar' ? cat.name_tr : cat.name_ar}</p>
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={isChecked}
+                      onChange={() => {
+                        setTempParentTypes(prev => ({
+                          ...prev,
+                          [cat.id]: isChecked ? 'none' : 'collections'
+                        }))
+                      }}
+                      className="w-4 h-4 rounded text-[#0da19a] bg-slate-900 border-slate-800 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#0da19a]"
+                    />
+                  </label>
+                )
+              })}
+            </div>
+
+            <div className="flex gap-3 border-t border-slate-800 pt-4">
+              <button
+                onClick={() => setEditingCollectionsList(false)}
+                className="flex-1 py-2 bg-slate-950 border border-slate-850 hover:bg-slate-850 rounded-xl font-bold text-xs text-slate-300 transition-colors cursor-pointer"
+              >
+                {locale === 'ar' ? 'إلغاء' : 'İptal'}
+              </button>
+              <button
+                onClick={handleSaveCollectionsList}
+                disabled={savingCollectionsList}
+                className="flex-1 py-2 bg-[#0da19a] hover:bg-[#0b807b] rounded-xl font-bold text-xs text-white flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                {savingCollectionsList ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
+                <span>{locale === 'ar' ? 'حفظ التعديلات' : 'Kaydet'}</span>
               </button>
             </div>
           </div>
