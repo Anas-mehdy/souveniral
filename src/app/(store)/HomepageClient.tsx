@@ -67,12 +67,10 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
     return () => clearInterval(timer)
   }, [localSettings.hero_slides])
 
-  // Category Edit State
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  const [categoryNameAr, setCategoryNameAr] = useState('')
-  const [categoryImageUrl, setCategoryImageUrl] = useState('')
-  const [savingCategory, setSavingCategory] = useState(false)
-  const [categoryUploading, setCategoryUploading] = useState(false)
+  // Category Replacement State
+  const [replacingCategory, setReplacingCategory] = useState<Category | null>(null)
+  const [replacementSearch, setReplacementSearch] = useState('')
+  const [savingReplacement, setSavingReplacement] = useState(false)
 
   // Slide Banners Edit State
   const [editingHero, setEditingHero] = useState(false)
@@ -110,13 +108,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
   const [tempParentTypes, setTempParentTypes] = useState<Record<string, 'none' | 'collections' | 'trends'>>({})
   const [savingCollectionsList, setSavingCollectionsList] = useState(false)
 
-  // Populate category edit form fields
-  useEffect(() => {
-    if (editingCategory) {
-      setCategoryNameAr(editingCategory.name_ar)
-      setCategoryImageUrl(editingCategory.image_url ?? '')
-    }
-  }, [editingCategory])
+  // Category replacement effect (no-op)
 
   // Sync state if initial settings change
   useEffect(() => {
@@ -247,62 +239,52 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
     }
   }
 
-  // Handle Category Image Uploading from device
-  async function handleCategoryImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setCategoryUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-
+  // Handle replacing one homepage category with another
+  async function handleReplaceCategory(selectedCat: Category) {
+    if (!replacingCategory) return
+    setSavingReplacement(true)
     try {
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        body: formData
+      // 1. Deactivate old category from collections
+      const p1 = fetch(`/api/admin/categories/${replacingCategory.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parent_type: 'none' })
       })
 
-      if (res.ok) {
-        const data = await res.json()
-        if (data.url) {
-          setCategoryImageUrl(data.url)
-        }
-      } else {
-        const err = await res.json()
-        alert('Upload failed: ' + (err.error || 'Unknown error'))
-      }
-    } catch (err) {
-      alert('Network error during upload')
-    } finally {
-      setCategoryUploading(false)
-    }
-  }
-
-  // 1. Save Category
-  const handleSaveCategory = async () => {
-    if (!editingCategory) return
-    setSavingCategory(true)
-    try {
-      const res = await fetch(`/api/admin/categories/${editingCategory.id}`, {
+      // 2. Activate new category into collections, borrowing the old one's sort_order
+      const p2 = fetch(`/api/admin/categories/${selectedCat.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name_ar: categoryNameAr,
-          image_url: categoryImageUrl
+          parent_type: 'collections',
+          sort_order: replacingCategory.sort_order ?? 10
         })
       })
-      if (res.ok) {
-        setLocalCategories(prev =>
-          prev.map(c => c.id === editingCategory.id ? { ...c, name_ar: categoryNameAr, image_url: categoryImageUrl } : c)
-        )
-        setEditingCategory(null)
-      } else {
-        alert('Failed to update category')
+
+      const [res1, res2] = await Promise.all([p1, p2])
+      if (!res1.ok || !res2.ok) {
+        throw new Error('Replacement API call failed')
       }
-    } catch (err) {
-      alert('Error updating category')
+
+      // Update localCategories state inline
+      setLocalCategories(prev => 
+        prev.map(c => {
+          if (c.id === replacingCategory.id) {
+            return { ...c, parent_type: 'none' }
+          }
+          if (c.id === selectedCat.id) {
+            return { ...c, parent_type: 'collections', sort_order: replacingCategory.sort_order ?? 10 }
+          }
+          return c
+        })
+      )
+
+      setReplacingCategory(null)
+      setReplacementSearch('')
+    } catch (err: any) {
+      alert('Error replacing category: ' + err.message)
     } finally {
-      setSavingCategory(false)
+      setSavingReplacement(false)
     }
   }
 
@@ -580,9 +562,9 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      setEditingCategory(cat)
+                      setReplacingCategory(cat)
                     }}
-                    title="تعديل هذا القسم سريعاً"
+                    title="استبدال هذا القسم بقسم آخر"
                     className="absolute top-1 right-1 p-1.5 bg-[#0da19a] hover:bg-[#0b807b] text-white rounded-full shadow-lg z-10 opacity-0 group-hover/cat:opacity-100 transition-opacity scale-90 cursor-pointer"
                   >
                     <Edit3 size={10} />
@@ -770,87 +752,81 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
       {/* ==================== ADMIN EDITING SYSTEM INLINE MODALS ================= */}
       {/* ========================================================================= */}
 
-      {/* A. CATEGORY EDIT DIALOG POPUP */}
-      {editingCategory && (
+      {/* A. CATEGORY REPLACEMENT DIALOG POPUP */}
+      {replacingCategory && (
         <div className="fixed inset-0 bg-slate-950/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-4 text-white shadow-2xl">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto space-y-4 text-white shadow-2xl scrollbar-none">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-black text-sm text-[#0da19a]">تعديل القسم / Kategori Düzenle</h3>
-              <button onClick={() => setEditingCategory(null)} className="p-1 hover:bg-slate-800 rounded text-slate-400"><X size={16} /></button>
-            </div>
-
-            <div className="space-y-3">
-              {/* Category Name Arabic */}
-              <div className="space-y-1">
-                <label className="text-[10px] text-slate-400 font-bold uppercase">الاسم (العربية)</label>
-                <input
-                  type="text"
-                  value={categoryNameAr}
-                  onChange={e => setCategoryNameAr(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white focus:outline-none focus:border-[#0da19a] text-right dir-rtl"
-                />
-              </div>
-
-              {/* Category Image Upload */}
-              <div className="space-y-1">
-                <label className="text-[10px] text-slate-400 font-bold uppercase">صورة الغلاف / Kapak Görseli</label>
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      id="category-file-input"
-                      onChange={handleCategoryImageUpload}
-                      disabled={categoryUploading}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="category-file-input"
-                      className="w-full h-10 px-4 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-850 text-xs font-bold text-slate-300 flex items-center justify-center gap-2 cursor-pointer transition-colors border-dashed"
-                    >
-                      {categoryUploading ? (
-                        <>
-                          <Loader2 className="animate-spin text-[#0da19a]" size={14} />
-                          <span>جاري الرفع... / Yükleniyor...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={14} className="text-[#0da19a]" />
-                          <span>تحميل صورة / Fotoğraf Yükle</span>
-                        </>
-                      )}
-                    </label>
-                  </div>
-                  {categoryImageUrl && (
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-800 relative bg-slate-950 shrink-0">
-                      <img src={categoryImageUrl} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  placeholder="أو رابط الصورة المباشر / Veya doğrudan URL yapıştırın"
-                  value={categoryImageUrl}
-                  onChange={e => setCategoryImageUrl(e.target.value)}
-                  className="w-full mt-2 px-3 py-2 bg-slate-950 border border-slate-850 rounded-xl text-[10px] text-white focus:outline-none focus:border-[#0da19a]"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 border-t border-slate-800 pt-4">
-              <button
-                onClick={() => setEditingCategory(null)}
-                className="flex-1 py-2 bg-slate-950 border border-slate-850 hover:bg-slate-850 rounded-xl font-bold text-xs text-slate-300 transition-colors cursor-pointer"
-              >
-                إلغاء / İptal
+              <h3 className="font-black text-sm text-[#0da19a]">
+                {locale === 'ar' ? 'استبدال القسم المعروض' : 'Kategoriyi Değiştir'}
+              </h3>
+              <button onClick={() => setReplacingCategory(null)} className="p-1 hover:bg-slate-800 rounded text-slate-400 cursor-pointer">
+                <X size={16} />
               </button>
+            </div>
+
+            <p className="text-[11px] text-slate-400 font-medium text-start leading-relaxed">
+              {locale === 'ar' 
+                ? `اختر قسماً من القائمة لاستبداله بقسم "${replacingCategory.name_ar}":` 
+                : `"${replacingCategory.name_tr}" kategorisinin yerine yerleştirmek istediğiniz kategoriyi seçin:`}
+            </p>
+
+            {/* Search Box */}
+            <input
+              type="text"
+              placeholder={locale === 'ar' ? 'ابحث عن قسم...' : 'Kategori ara...'}
+              value={replacementSearch}
+              onChange={e => setReplacementSearch(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-[#0da19a] text-start"
+            />
+
+            <div className="space-y-2 py-2 max-h-[300px] overflow-y-auto pr-1">
+              {localCategories
+                .filter(cat => {
+                  // Hide categories already shown in the carousel, and exclude the one being replaced
+                  if (cat.parent_type === 'collections' || cat.id === replacingCategory.id) return false
+                  
+                  // Search query filter
+                  if (replacementSearch) {
+                    const searchLower = replacementSearch.toLowerCase()
+                    const nameArMatch = cat.name_ar.toLowerCase().includes(searchLower)
+                    const nameTrMatch = cat.name_tr.toLowerCase().includes(searchLower)
+                    return nameArMatch || nameTrMatch
+                  }
+                  
+                  return true
+                })
+                .map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleReplaceCategory(cat)}
+                    disabled={savingReplacement}
+                    className="w-full flex items-center justify-between p-3 bg-slate-950 hover:bg-slate-850 disabled:opacity-50 border border-slate-800 rounded-2xl cursor-pointer transition-colors text-start"
+                  >
+                    <div className="flex items-center gap-3">
+                      {cat.image_url ? (
+                        <img src={cat.image_url} alt="" className="w-8 h-8 rounded-lg object-cover animate-in fade-in" />
+                      ) : (
+                        <div className="w-8 h-8 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-xs text-[#0da19a]">📂</div>
+                      )}
+                      <div>
+                        <p className="text-xs font-bold text-white leading-tight">{locale === 'ar' ? cat.name_ar : cat.name_tr}</p>
+                        <p className="text-[9px] text-slate-500 font-semibold mt-0.5">{locale === 'ar' ? cat.name_tr : cat.name_ar}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-[#0da19a]/10 text-[#0da19a] font-bold px-2.5 py-1 rounded-lg">
+                      {locale === 'ar' ? 'اختر' : 'Seç'}
+                    </span>
+                  </button>
+                ))}
+            </div>
+
+            <div className="flex border-t border-slate-800 pt-4">
               <button
-                onClick={handleSaveCategory}
-                disabled={savingCategory}
-                className="flex-1 py-2 bg-[#0da19a] hover:bg-[#0b807b] rounded-xl font-bold text-xs text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                onClick={() => setReplacingCategory(null)}
+                className="w-full py-2 bg-slate-950 border border-slate-850 hover:bg-slate-850 rounded-xl font-bold text-xs text-slate-300 transition-colors cursor-pointer"
               >
-                {savingCategory ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
-                <span>حفظ التعديلات / Kaydet</span>
+                {locale === 'ar' ? 'إلغاء' : 'İptal'}
               </button>
             </div>
           </div>
