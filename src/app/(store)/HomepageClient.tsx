@@ -124,6 +124,33 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
     setGallery(settings.customer_gallery || [])
   }, [settings])
 
+  // Determine which collections are currently shown on the homepage
+  const displayedCollections = (() => {
+    const collections = localCategories.filter(cat => cat.parent_type === 'collections')
+    if (collections.length > 0) return collections.slice(0, 7)
+
+    const FALLBACK_SLUGS = [
+      'kisiye-ozel-telefon-kilifi-tasarla',
+      'kiiye-zel-telefon-klf-tasarla',
+      'taraftar-ve-futbolcu-kiliflari',
+      'taraftar-ve-futbolcu-klflar',
+      'islami-tasarim-ve-filistin-temali-telefon-kiliflari',
+      'islami-tasarim-ve-filistin-temali-telefon-klflar',
+      'estetik-koleksiyonu',
+      'araba-telefon-kiliflari',
+      'araba-telefon-klflar',
+      'matematik-telefon-kiliflari',
+      'matematik-telefon-klflar',
+      'tarih-telefon-kiliflari',
+      'tarih-telefon-klflar',
+      'film-dizi-ve-popler-kltr-koleksiyonu',
+      'formula-1-telefon-klflar',
+      'basketbol-telefon-klflar'
+    ]
+    const filtered = localCategories.filter(cat => FALLBACK_SLUGS.includes(cat.slug))
+    return filtered.length > 0 ? filtered.slice(0, 7) : localCategories.slice(0, 7)
+  })()
+
   // Partition products into lists
   const bestSellers = products.slice(0, 4)
   const newestArrivals = products.slice(4, 8)
@@ -509,32 +536,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
           </div>
 
           <div className="flex overflow-x-auto flex-nowrap gap-4 pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth w-full sm:grid sm:grid-cols-4 lg:grid-cols-7 sm:gap-4 md:gap-5 sm:pb-0 sm:overflow-visible pt-1 px-1">
-            {(() => {
-              const collections = localCategories.filter(cat => cat.parent_type === 'collections')
-              if (collections.length > 0) return collections.slice(0, 7)
-
-              // Smart fallback list of slugs to show exactly 7 collections if database is not migrated yet
-              const FALLBACK_SLUGS = [
-                'kisiye-ozel-telefon-kilifi-tasarla',
-                'kiiye-zel-telefon-klf-tasarla',
-                'taraftar-ve-futbolcu-kiliflari',
-                'taraftar-ve-futbolcu-klflar',
-                'islami-tasarim-ve-filistin-temali-telefon-kiliflari',
-                'islami-tasarim-ve-filistin-temali-telefon-klflar',
-                'estetik-koleksiyonu',
-                'araba-telefon-kiliflari',
-                'araba-telefon-klflar',
-                'matematik-telefon-kiliflari',
-                'matematik-telefon-klflar',
-                'tarih-telefon-kiliflari',
-                'tarih-telefon-klflar',
-                'film-dizi-ve-popler-kltr-koleksiyonu',
-                'formula-1-telefon-klflar',
-                'basketbol-telefon-klflar'
-              ]
-              const filtered = localCategories.filter(cat => FALLBACK_SLUGS.includes(cat.slug))
-              return filtered.length > 0 ? filtered.slice(0, 7) : localCategories.slice(0, 7)
-            })().map(cat => (
+            {displayedCollections.map(cat => (
               <div key={cat.id} className="relative flex flex-col items-center gap-3 group/cat w-[42%] sm:w-full shrink-0 snap-start">
                 <Link
                   href={`/products?category=${cat.slug}`}
@@ -784,13 +786,14 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
               {localCategories
                 .filter(cat => {
                   // Hide categories already shown in the carousel, and exclude the one being replaced
-                  if (cat.parent_type === 'collections' || cat.id === replacingCategory.id) return false
+                  const isAlreadyVisible = displayedCollections.some(vc => vc.id === cat.id)
+                  if (isAlreadyVisible || cat.id === replacingCategory.id) return false
                   
                   // Search query filter
                   if (replacementSearch) {
                     const searchLower = replacementSearch.toLowerCase()
-                    const nameArMatch = cat.name_ar.toLowerCase().includes(searchLower)
-                    const nameTrMatch = cat.name_tr.toLowerCase().includes(searchLower)
+                    const nameArMatch = cat.name_ar ? cat.name_ar.toLowerCase().includes(searchLower) : false
+                    const nameTrMatch = cat.name_tr ? cat.name_tr.toLowerCase().includes(searchLower) : false
                     return nameArMatch || nameTrMatch
                   }
                   
