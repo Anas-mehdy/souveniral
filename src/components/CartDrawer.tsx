@@ -149,9 +149,9 @@ export function CartDrawer() {
                   {/* Delete button */}
                   <button
                     onClick={() => removeFromCart(item.id, item.brand, item.model, item.custom_text, item.custom_image, item.custom_details, item.custom_fields_values)}
-                    className="absolute top-2 end-2 p-1 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                    className="absolute top-2.5 end-2.5 p-1.5 text-gray-400 hover:text-red-500 transition-colors md:opacity-0 md:group-hover:opacity-100 opacity-100 cursor-pointer"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={15} />
                   </button>
                 </div>
               ))
