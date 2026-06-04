@@ -57,7 +57,7 @@ export interface Product {
   category?: Category
   images?: ProductImage[]
   models?: ProductModel[]
-  custom_type?: 'none' | 'image' | 'text'
+  custom_type?: 'none' | 'image' | 'image_only' | 'text'
   custom_label_ar?: string | null
   custom_placeholder_ar?: string | null
   custom_fields?: CustomField[]

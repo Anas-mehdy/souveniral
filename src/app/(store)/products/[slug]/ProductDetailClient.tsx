@@ -81,7 +81,7 @@ export function ProductDetailClient({ product, similarProducts = [] }: { product
       setErrorMsg(locale === 'ar' ? `الرجاء إدخال: ${product.custom_label_ar || 'النص المطلوب'}` : 'Lütfen gerekli alanı doldurun')
       return
     }
-    if (product.custom_type === 'image' && !customImage) {
+    if ((product.custom_type === 'image' || product.custom_type === 'image_only') && !customImage) {
       setErrorMsg(locale === 'ar' ? 'الرجاء إرفاق الصورة المطلوبة للطباعة' : 'Lütfen basılacak resmi yükleyin')
       return
     }
@@ -112,8 +112,8 @@ export function ProductDetailClient({ product, similarProducts = [] }: { product
       model: selectedModel,
       custom_type: product.custom_type,
       custom_text: product.custom_type === 'text' ? customText : null,
-      custom_image: product.custom_type === 'image' ? customImage : null,
-      custom_image_name: product.custom_type === 'image' ? customImageName : null,
+      custom_image: (product.custom_type === 'image' || product.custom_type === 'image_only') ? customImage : null,
+      custom_image_name: (product.custom_type === 'image' || product.custom_type === 'image_only') ? customImageName : null,
       custom_details: product.custom_type === 'image' ? customDetails : null,
       custom_fields_values: Object.keys(customFieldsValues).length > 0 ? customFieldsValues : null
     }, quantity)
@@ -364,7 +364,7 @@ export function ProductDetailClient({ product, similarProducts = [] }: { product
                 )}
 
                 {/* Standard customization back-compat: Image type */}
-                {product.custom_type === 'image' && (
+                {(product.custom_type === 'image' || product.custom_type === 'image_only') && (
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-gray-800 flex items-center gap-1">
                       <span>{locale === 'ar' ? 'ارفق صورتك الشخصية للطباعة 🖼️' : 'Baskı İçin Görsel Yükle 🖼️'}</span>
@@ -420,18 +420,20 @@ export function ProductDetailClient({ product, similarProducts = [] }: { product
                     )}
 
                     {/* Extra custom details */}
-                    <div className="space-y-1 mt-3">
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                        {locale === 'ar' ? 'تفاصيل إضافية للطباعة (اختياري)' : 'Ekstra Baskı Detayları (İsteğe Bağlı)'}
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={customDetails}
-                        onChange={e => setCustomDetails(e.target.value)}
-                        placeholder={locale === 'ar' ? 'اكتب أي تفاصيل أو تعديلات تريدها على الصورة...' : 'Resim üzerinde yapılmasını istediğiniz düzenlemeleri yazabilirsiniz...'}
-                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#0da19a] text-right dir-rtl"
-                      />
-                    </div>
+                    {product.custom_type === 'image' && (
+                      <div className="space-y-1 mt-3">
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                          {locale === 'ar' ? 'تفاصيل إضافية للطباعة (اختياري)' : 'Ekstra Baskı Detayları (İsteğe Bağlı)'}
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={customDetails}
+                          onChange={e => setCustomDetails(e.target.value)}
+                          placeholder={locale === 'ar' ? 'اكتب أي تفاصيل أو تعديلات تريدها على الصورة...' : 'Resim üzerinde yapılmasını istediğiniz düzenlemeleri yazabilirsiniz...'}
+                          className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#0da19a] text-right dir-rtl"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

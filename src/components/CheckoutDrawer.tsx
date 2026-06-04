@@ -591,7 +591,7 @@ export function CheckoutDrawer({ open, onClose }: Props) {
                             ✏️ <span className="text-gray-700">{item.custom_text}</span>
                           </p>
                         )}
-                        {item.custom_type === 'image' && item.custom_image && (
+                        {(item.custom_type === 'image' || item.custom_type === 'image_only') && item.custom_image && (
                           <div className="flex items-center gap-1.5 mt-1">
                             <span className="text-[9px] text-indigo-650 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.2 font-bold select-none">
                               🖼️ Görsel

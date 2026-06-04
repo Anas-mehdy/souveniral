@@ -155,7 +155,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
   const [prodComparePrice, setProdComparePrice] = useState('')
   const [prodCategoryId, setProdCategoryId] = useState('')
   const [prodIsActive, setProdIsActive] = useState(true)
-  const [prodCustomType, setProdCustomType] = useState<'none' | 'image' | 'text'>('none')
+  const [prodCustomType, setProdCustomType] = useState<'none' | 'image' | 'image_only' | 'text'>('none')
   const [prodCustomLabelAr, setProdCustomLabelAr] = useState('')
   const [prodCustomPlaceholderAr, setProdCustomPlaceholderAr] = useState('')
   const [prodCustomFields, setProdCustomFields] = useState<CustomField[]>([])
@@ -1237,6 +1237,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
                   >
                     <option value="none">لا يوجد (منتج قياسي عادي)</option>
                     <option value="image">رفع صورة مخصصة للطباعة + تفاصيل نصية</option>
+                    <option value="image_only">رفع صورة مخصصة للطباعة فقط</option>
                     <option value="text">كتابة نص/حرف مخصص للطباعة</option>
                   </select>
                 </div>
@@ -1267,7 +1268,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
                   </div>
                 )}
 
-                {prodCustomType === 'image' && (
+                {(prodCustomType === 'image' || prodCustomType === 'image_only') && (
                   <div className="animate-in fade-in duration-200">
                     <label className="block text-xs font-semibold text-slate-400 mb-1">شرح/تعليمات رفع الصورة الشخصية</label>
                     <input
@@ -1916,7 +1917,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
                           </div>
                         )}
 
-                        {item.custom_type === 'image' && item.custom_image && (
+                        {(item.custom_type === 'image' || item.custom_type === 'image_only') && item.custom_image && (
                           <div className="flex flex-col items-center sm:items-start gap-1">
                             <p className="text-[9px] text-slate-550 text-slate-500 font-bold">التصميم الشخصي للطباعة 🖼️</p>
                             <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-800 group bg-slate-950 inline-block shadow-lg">

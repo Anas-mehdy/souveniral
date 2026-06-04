@@ -84,7 +84,7 @@ export function CartDrawer() {
                           ✏️ {locale === 'ar' ? 'النص المطلوب: ' : 'İstenen Metin: '} <span className="font-bold text-gray-700">{item.custom_text}</span>
                         </div>
                       )}
-                      {item.custom_type === 'image' && item.custom_image && (
+                      {(item.custom_type === 'image' || item.custom_type === 'image_only') && item.custom_image && (
                         <div className="space-y-1 mt-1">
                           <div className="text-[10px] text-gray-500 font-semibold bg-indigo-50 border border-indigo-100 rounded px-2 py-0.5 inline-block">
                             🖼️ {locale === 'ar' ? 'صورة مرفوعة للطباعة' : 'Yüklenen Görsel'}
