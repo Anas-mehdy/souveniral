@@ -160,6 +160,103 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
   const [prodCustomPlaceholderAr, setProdCustomPlaceholderAr] = useState('')
   const [prodCustomFields, setProdCustomFields] = useState<CustomField[]>([])
 
+  // Bulk selection states
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
+  const [savingBulkAction, setSavingBulkAction] = useState(false)
+
+  // Clear selections when filters or page changes
+  useEffect(() => {
+    setSelectedProductIds([])
+  }, [searchQuery, categoryFilter, productPage])
+
+  const handleSelectProductToggle = (id: string) => {
+    setSelectedProductIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
+  const handleSelectAllToggle = () => {
+    const allPaginatedSelected = paginatedProducts.length > 0 && paginatedProducts.every(p => selectedProductIds.includes(p.id))
+    if (allPaginatedSelected) {
+      setSelectedProductIds(prev => prev.filter(id => !paginatedProducts.some(p => p.id === id)))
+    } else {
+      setSelectedProductIds(prev => {
+        const newSelections = paginatedProducts.filter(p => !prev.includes(p.id)).map(p => p.id)
+        return [...prev, ...newSelections]
+      })
+    }
+  }
+
+  const handleClearSelections = () => {
+    setSelectedProductIds([])
+  }
+
+  async function handleBulkUpdateCategory(categoryId: string) {
+    setSavingBulkAction(true)
+    try {
+      const promises = selectedProductIds.map(id =>
+        fetch(`/api/admin/products/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category_id: categoryId || null })
+        }).then(async res => {
+          if (!res.ok) {
+            const err = await res.json()
+            throw new Error(err.error || `Failed to update product ${id}`)
+          }
+          return id
+        })
+      )
+      
+      await Promise.all(promises)
+
+      // Update local state inline
+      setProducts(prev => 
+        prev.map(p => 
+          selectedProductIds.includes(p.id) 
+            ? { ...p, category_id: categoryId || null } 
+            : p
+        )
+      )
+
+      setSelectedProductIds([])
+      alert('تم تحديث الأقسام بنجاح! / Kategoriler başarıyla güncellendi!')
+    } catch (err: any) {
+      alert('حدث خطأ أثناء التحديث الجماعي: / Toplu güncelleme hatası: ' + err.message)
+    } finally {
+      setSavingBulkAction(false)
+    }
+  }
+
+  async function handleBulkDeleteProducts() {
+    setSavingBulkAction(true)
+    try {
+      const promises = selectedProductIds.map(id =>
+        fetch(`/api/admin/products/${id}`, {
+          method: 'DELETE'
+        }).then(async res => {
+          if (!res.ok) {
+            const err = await res.json()
+            throw new Error(err.error || `Failed to delete product ${id}`)
+          }
+          return id
+        })
+      )
+      
+      await Promise.all(promises)
+
+      // Update local state inline
+      setProducts(prev => prev.filter(p => !selectedProductIds.includes(p.id)))
+
+      setSelectedProductIds([])
+      alert('تم حذف المنتجات المحددة بنجاح! / Seçili ürünler başarıyla silindi!')
+    } catch (err: any) {
+      alert('حدث خطأ أثناء الحذف الجماعي: / Toplu silme hatası: ' + err.message)
+    } finally {
+      setSavingBulkAction(false)
+    }
+  }
+
   // Form states - Category
   const [catSlug, setCatSlug] = useState('')
   const [catNameAr, setCatNameAr] = useState('')
@@ -751,11 +848,76 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
               </button>
             </div>
 
+            {/* Bulk actions banner */}
+            {selectedProductIds.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-4 p-4 mb-4 bg-slate-900 border border-[#0da19a]/35 rounded-2xl animate-in slide-in-from-top-4 duration-300">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold bg-[#0da19a]/20 text-[#0da19a] px-3 py-1.5 rounded-xl border border-[#0da19a]/20">
+                    تم تحديد {selectedProductIds.length} منتج / {selectedProductIds.length} ürün seçildi
+                  </span>
+                  <button
+                    onClick={handleClearSelections}
+                    className="text-xs text-slate-400 hover:text-slate-200 transition-colors font-bold underline cursor-pointer"
+                  >
+                    إلغاء التحديد / Seçimi Temizle
+                  </button>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* Category Bulk Selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-400">
+                      تغيير القسم إلى: / Kategoriyi Değiştir:
+                    </span>
+                    <select
+                      disabled={savingBulkAction}
+                      onChange={async (e) => {
+                        const targetCatId = e.target.value
+                        if (!targetCatId) return
+                        if (confirm(`هل أنت متأكد من نقل ${selectedProductIds.length} منتج إلى هذا القسم؟\nSeçili ${selectedProductIds.length} ürünü bu kategoriye taşımak istediğinizden emin misiniz?`)) {
+                          await handleBulkUpdateCategory(targetCatId)
+                          e.target.value = "" // Reset select value
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer disabled:opacity-50"
+                    >
+                      <option value="">اختر القسم... / Kategori Seç...</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name_ar} / {c.name_tr}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Bulk Delete Button */}
+                  <button
+                    disabled={savingBulkAction}
+                    onClick={async () => {
+                      if (confirm(`⚠️ تحذير: هل أنت متأكد من حذف ${selectedProductIds.length} منتج بشكل نهائي؟ لا يمكن التراجع عن هذه الخطوة!\n⚠️ Uyarı: Seçili ${selectedProductIds.length} ürünü kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!`)) {
+                        await handleBulkDeleteProducts()
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-1.5 bg-red-950/40 hover:bg-red-900/40 text-red-400 border border-red-900/30 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {savingBulkAction ? <Loader2 className="animate-spin" size={13} /> : <Trash2 size={13} />}
+                    <span>حذف جماعي / Toplu Sil</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Products Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-300">
                 <thead className="bg-slate-950/60 text-slate-400 text-xs font-semibold uppercase tracking-wider border-b border-slate-800">
                   <tr>
+                    <th className="px-4 py-4 w-10 text-center">
+                      <input 
+                        type="checkbox"
+                        checked={paginatedProducts.length > 0 && paginatedProducts.every(p => selectedProductIds.includes(p.id))}
+                        onChange={handleSelectAllToggle}
+                        className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-800 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#0da19a]"
+                      />
+                    </th>
                     <th className="px-6 py-4">صورة / Foto</th>
                     <th className="px-6 py-4">المنتج / Ürün</th>
                     <th className="px-6 py-4">القسم / Kategori</th>
@@ -767,7 +929,7 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
                 <tbody className="divide-y divide-slate-800/60">
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-12 text-slate-500">
+                      <td colSpan={7} className="text-center py-12 text-slate-500">
                         لا توجد نتائج / Ürün bulunamadı
                       </td>
                     </tr>
@@ -776,7 +938,15 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
                       const primaryImg = p.images?.[0]?.url
                       const cat = categories.find(c => c.id === p.category_id)
                       return (
-                        <tr key={p.id} className="hover:bg-slate-800/20 transition-colors">
+                        <tr key={p.id} className={`hover:bg-slate-800/20 transition-colors ${selectedProductIds.includes(p.id) ? 'bg-[#0da19a]/5' : ''}`}>
+                          <td className="px-4 py-4 text-center whitespace-nowrap">
+                            <input 
+                              type="checkbox"
+                              checked={selectedProductIds.includes(p.id)}
+                              onChange={() => handleSelectProductToggle(p.id)}
+                              className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-800 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#0da19a]"
+                            />
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {primaryImg ? (
                               <div className="w-12 h-12 rounded-lg overflow-hidden border border-slate-800 relative bg-slate-950">
