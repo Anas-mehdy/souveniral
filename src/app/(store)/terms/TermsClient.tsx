@@ -33,8 +33,8 @@ export function TermsClient() {
               <p className="text-gray-600">
                 نظراً للطبيعة المخصصة للمنتجات، لا تُقبل طلبات الإرجاع إلا في حالة وجود عيب مصنعي حقيقي.
                 في حال وجود مشكلة، تواصل معنا على{' '}
-                <a href="mailto:info@kilifal.com" className="text-[#0da19a] hover:underline font-semibold">
-                  info@kilifal.com
+                <a href="mailto:info@souveniral.com" className="text-[#0da19a] hover:underline font-semibold">
+                  info@souveniral.com
                 </a>
                 . يتم إعادة الإنتاج مجاناً في حالات التوصيل التالف أو الخاطئ.
               </p>
@@ -85,8 +85,8 @@ export function TermsClient() {
               <p className="text-gray-600">
                 Kişiye özel üretim nedeniyle, üründe geçerli bir imalat hatası bulunmadıkça iade talepleri
                 kabul edilmemektedir. Ürününüzde bir sorun olması durumunda{' '}
-                <a href="mailto:info@kilifal.com" className="text-[#0da19a] hover:underline font-semibold">
-                  info@kilifal.com
+                <a href="mailto:info@souveniral.com" className="text-[#0da19a] hover:underline font-semibold">
+                  info@souveniral.com
                 </a>{' '}
                 adresinden bizimle iletişime geçiniz. Hasarlı veya yanlış ürün teslimatlarında ücretsiz
                 yeniden üretim yapılmaktadır.
@@ -121,8 +121,8 @@ export function TermsClient() {
             <section>
               <h2 className="text-lg font-black text-gray-900 mb-2">6. İletişim</h2>
               <p className="text-gray-600">
-                <a href="mailto:info@kilifal.com" className="text-[#0da19a] hover:underline font-semibold">
-                  info@kilifal.com
+                <a href="mailto:info@souveniral.com" className="text-[#0da19a] hover:underline font-semibold">
+                  info@souveniral.com
                 </a>
               </p>
             </section>

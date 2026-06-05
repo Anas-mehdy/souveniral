@@ -90,8 +90,8 @@ export function Footer() {
             </p>
             <ul className="space-y-2 text-xs">
               <li>
-                <a href="mailto:info@kilifal.com" className="hover:text-white transition-colors">
-                  ✉️ info@kilifal.com
+                <a href="mailto:info@souveniral.com" className="hover:text-white transition-colors">
+                  ✉️ info@souveniral.com
                 </a>
               </li>
               <li className="text-gray-500">

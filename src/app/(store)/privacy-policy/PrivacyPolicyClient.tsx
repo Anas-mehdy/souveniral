@@ -50,8 +50,8 @@ export function PrivacyPolicyClient() {
               <h2 className="text-lg font-black text-gray-900 mb-2">٤. الاتصال بنا</h2>
               <p>
                 لأي استفسار:{' '}
-                <a href="mailto:info@kilifal.com" className="text-[#0da19a] hover:underline font-semibold">
-                  info@kilifal.com
+                <a href="mailto:info@souveniral.com" className="text-[#0da19a] hover:underline font-semibold">
+                  info@souveniral.com
                 </a>
               </p>
             </section>
@@ -111,8 +111,8 @@ export function PrivacyPolicyClient() {
               <h2 className="text-lg font-black text-gray-900 mb-2">6. İletişim</h2>
               <p>
                 Gizlilik ile ilgili sorularınız için:{' '}
-                <a href="mailto:info@kilifal.com" className="text-[#0da19a] hover:underline font-semibold">
-                  info@kilifal.com
+                <a href="mailto:info@souveniral.com" className="text-[#0da19a] hover:underline font-semibold">
+                  info@souveniral.com
                 </a>
               </p>
             </section>
