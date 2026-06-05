@@ -1,6 +1,7 @@
 import { supabaseAdmin } from './supabase'
 import path from 'path'
 import { cookies } from 'next/headers'
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto'
 
 export interface Customer {
   id: string
@@ -123,17 +124,45 @@ export async function verifyCustomerCredentials(email: string, phone: string): P
   return matched || null
 }
 
+// ── Secure HMAC-signed session token ──────────────────────────────────────────
+// Uses HMAC-SHA256 with a secret to sign session tokens.
+// Falls back to a hardcoded secret if SESSION_SECRET env is not set.
+const SESSION_SECRET = process.env.SESSION_SECRET || 'kilifal-session-secret-please-change-me'
+
+function signToken(payload: Record<string, string>): string {
+  const data = JSON.stringify(payload)
+  const dataB64 = Buffer.from(data).toString('base64url')
+  const sig = createHmac('sha256', SESSION_SECRET).update(dataB64).digest('base64url')
+  return `${dataB64}.${sig}`
+}
+
+function verifyToken(token: string): Record<string, string> | null {
+  try {
+    const [dataB64, sig] = token.split('.')
+    if (!dataB64 || !sig) return null
+    const expectedSig = createHmac('sha256', SESSION_SECRET).update(dataB64).digest('base64url')
+    // Constant-time comparison to prevent timing attacks
+    const sigBuf = Buffer.from(sig)
+    const expectedBuf = Buffer.from(expectedSig)
+    if (sigBuf.length !== expectedBuf.length) return null
+    if (!timingSafeEqual(sigBuf, expectedBuf)) return null
+    const data = Buffer.from(dataB64, 'base64url').toString('utf-8')
+    return JSON.parse(data)
+  } catch {
+    return null
+  }
+}
+
 export async function getCustomerFromSession(): Promise<Customer | null> {
   try {
     const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('customer_session')?.value
     if (!sessionCookie) return null
 
-    // Decode token
-    const decoded = Buffer.from(sessionCookie, 'base64').toString('utf-8')
-    const { email, phone } = JSON.parse(decoded)
+    const payload = verifyToken(sessionCookie)
+    if (!payload || !payload.email || !payload.phone) return null
 
-    return await verifyCustomerCredentials(email, phone)
+    return await verifyCustomerCredentials(payload.email, payload.phone)
   } catch (e) {
     return null
   }
@@ -144,7 +173,7 @@ export async function loginCustomer(email: string, phone: string): Promise<boole
   if (!customer) return false
 
   const cookieStore = await cookies()
-  const token = Buffer.from(JSON.stringify({ email: customer.email, phone: customer.phone })).toString('base64')
+  const token = signToken({ email: customer.email, phone: customer.phone })
   
   cookieStore.set('customer_session', token, {
     httpOnly: true,

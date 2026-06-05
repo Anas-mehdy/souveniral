@@ -29,6 +29,7 @@ export function Navbar({ settings, categories = [] }: { settings?: StoreSettings
     collections: locale === 'ar' ? 'المجموعات' : 'Koleksiyonlar',
     trends: locale === 'ar' ? 'الأكثر رواجاً' : 'Trendler',
     allProducts: locale === 'ar' ? 'جميع المنتجات' : 'Tüm ürünler',
+    categories: locale === 'ar' ? 'الأقسام' : 'Kategoriler',
     customCover: locale === 'ar' ? 'كفر هاتف مخصص' : 'Kişiye Özel Telefon Kılıfı',
     orderTracking: locale === 'ar' ? 'تتبع الطلب' : 'Sipariş Takibi',
     myAccount: locale === 'ar' ? 'حسابي' : 'Hesabım'
@@ -198,6 +199,7 @@ export function Navbar({ settings, categories = [] }: { settings?: StoreSettings
           </div>
 
           <Link href="/products" className="hover:text-[#0da19a] transition-colors">{labels.allProducts}</Link>
+          <Link href="/categories" className="hover:text-[#0da19a] transition-colors">{locale === 'ar' ? 'الأقسام' : 'Kategoriler'}</Link>
           <Link href="/products?category=kisiye-ozel-telefon-kilifi-tasarla" className="hover:text-[#0da19a] transition-colors text-rose-500 font-extrabold flex items-center gap-1">
             <Sparkles size={13} className="text-rose-500 animate-pulse" />
             <span>{labels.customCover}</span>
@@ -289,6 +291,7 @@ export function Navbar({ settings, categories = [] }: { settings?: StoreSettings
           )}
 
           <Link href="/products" className="py-2.5 hover:text-[#0da19a] border-b border-gray-50 transition-colors" onClick={() => setOpen(false)}>{labels.allProducts}</Link>
+          <Link href="/categories" className="py-2.5 hover:text-[#0da19a] border-b border-gray-50 transition-colors" onClick={() => setOpen(false)}>{locale === 'ar' ? 'الأقسام' : 'Kategoriler'}</Link>
           <Link href="/products?category=kisiye-ozel-telefon-kilifi-tasarla" className="py-2.5 hover:text-[#0da19a] border-b border-gray-50 transition-colors text-rose-500 font-extrabold flex items-center gap-1" onClick={() => setOpen(false)}>
             <Sparkles size={13} className="text-rose-500" />
             <span>{labels.customCover}</span>

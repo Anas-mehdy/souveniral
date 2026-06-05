@@ -111,8 +111,25 @@ export function CheckoutDrawer({ open, onClose }: Props) {
   const [postalCode, setPostalCode] = useState('')
   const [city, setCity] = useState('')
   const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState('')
   const [saveInfo, setSaveInfo] = useState(true)
   const [billingSame, setBillingSame] = useState(true)
+
+  // Phone number validation (Turkish format: 10 digits, optionally with +90 prefix)
+  const validatePhone = (value: string): boolean => {
+    const digits = value.replace(/\D/g, '')
+    // Accept Turkish format: 10 digits starting with 0, or 12 digits starting with 90
+    return digits.length >= 10 && digits.length <= 13
+  }
+
+  const handlePhoneChange = (value: string) => {
+    setPhone(value)
+    if (value && !validatePhone(value)) {
+      setPhoneError(locale === 'ar' ? 'رقم الهاتف يجب أن يكون 10 أرقام على الأقل' : 'Telefon numarası en az 10 haneli olmalıdır')
+    } else {
+      setPhoneError('')
+    }
+  }
 
 
   // Free shipping for 2+ items
@@ -414,19 +431,28 @@ export function CheckoutDrawer({ open, onClose }: Props) {
                   </div>
 
                   {/* Telefon */}
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      required
-                      value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      placeholder="0535 124 57 89"
-                      className="w-full pl-16 pr-3 py-3 border border-gray-200 rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 bg-white text-left font-mono"
-                    />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none select-none">
-                      <span className="text-base">🇹🇷</span>
-                      <span className="text-[10px] font-bold text-gray-400">+90</span>
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={e => handlePhoneChange(e.target.value)}
+                        placeholder="0535 124 57 89"
+                        className={`w-full pl-16 pr-3 py-3 border rounded-lg text-xs font-semibold text-gray-800 focus:outline-none focus:ring-1 bg-white text-left font-mono ${
+                          phoneError
+                            ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-indigo-600 focus:ring-indigo-600'
+                        }`}
+                      />
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none select-none">
+                        <span className="text-base">🇹🇷</span>
+                        <span className="text-[10px] font-bold text-gray-400">+90</span>
+                      </div>
                     </div>
+                    {phoneError && (
+                      <p className="text-[10px] text-red-500 font-bold px-1">{phoneError}</p>
+                    )}
                   </div>
 
                   {/* Save info checkbox */}

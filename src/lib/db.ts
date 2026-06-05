@@ -10,6 +10,18 @@ export async function getCategories(): Promise<Category[]> {
   return (data as Category[]) ?? []
 }
 
+// Returns ALL root categories (including hidden ones with parent_type='none')
+// Used on the /categories page to show the full catalog
+export async function getAllCategories(): Promise<Category[]> {
+  const { data } = await supabase
+    .from('categories')
+    .select('*, subcategories:categories!parent_id(*)')
+    .is('parent_id', null)
+    .order('sort_order')
+  return (data as Category[]) ?? []
+}
+
+
 export async function getProducts(opts?: {
   categorySlug?: string
   search?: string

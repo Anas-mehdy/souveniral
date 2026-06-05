@@ -2,29 +2,37 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createOrder } from '@/lib/orders'
 import { upsertCustomer } from '@/lib/customers'
 
-// ── In-memory rate limiter ────────────────────────────────────────────────────
-// Allows max 5 order submissions per IP per 10 minutes.
-// Simple Map-based approach — resets on server restart (acceptable for COD store).
-const RATE_LIMIT_MAX = 5
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000 // 10 minutes
+// ── Rate limiter using Supabase-compatible sliding window ─────────────────────
+// Uses a Map with sliding window. Resets on restart (acceptable for COD store).
+// On Vercel edge, consider using Upstash Redis for persistence.
+const RATE_LIMIT_MAX = 3           // Max 3 order submissions per window
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000 // 15 minutes window
 
-const ipHits = new Map<string, { count: number; resetAt: number }>()
+interface RateLimitEntry {
+  timestamps: number[]
+}
+
+const ipHits = new Map<string, RateLimitEntry>()
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
+  const cutoff = now - RATE_LIMIT_WINDOW_MS
+
   const entry = ipHits.get(ip)
-
-  if (!entry || now > entry.resetAt) {
-    ipHits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
-    return true // allowed
+  if (!entry) {
+    ipHits.set(ip, { timestamps: [now] })
+    return true
   }
 
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return false // blocked
+  // Remove timestamps outside the window (sliding)
+  entry.timestamps = entry.timestamps.filter(ts => ts > cutoff)
+
+  if (entry.timestamps.length >= RATE_LIMIT_MAX) {
+    return false
   }
 
-  entry.count++
-  return true // allowed
+  entry.timestamps.push(now)
+  return true
 }
 
 export async function POST(req: NextRequest) {
@@ -50,6 +58,28 @@ export async function POST(req: NextRequest) {
       if (body[key] === undefined || body[key] === null) {
         return NextResponse.json({ error: `Missing required field: ${key}` }, { status: 400 })
       }
+    }
+
+    // Basic email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(body.email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
+    }
+
+    // Phone must be at least 7 digits
+    const digitsOnly = body.phone.replace(/\D/g, '')
+    if (digitsOnly.length < 7) {
+      return NextResponse.json({ error: 'Invalid phone number' }, { status: 400 })
+    }
+
+    // Items must be non-empty array
+    if (!Array.isArray(body.items) || body.items.length === 0) {
+      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
+    }
+
+    // grand_total sanity check (must be positive)
+    if (typeof body.grand_total !== 'number' || body.grand_total <= 0) {
+      return NextResponse.json({ error: 'Invalid total amount' }, { status: 400 })
     }
     
     // Create/update customer account automatically

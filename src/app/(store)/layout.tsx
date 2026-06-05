@@ -5,6 +5,7 @@ import { CartDrawer } from '@/components/CartDrawer'
 import { getStoreSettings } from '@/lib/settings'
 import { getCategories } from '@/lib/db'
 import { Footer } from '@/components/Footer'
+import { WhatsAppButton } from '@/components/WhatsAppButton'
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const settings = await getStoreSettings()
@@ -19,9 +20,11 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         </main>
 
         <CartDrawer />
+        <WhatsAppButton />
 
         <Footer />
       </CartProvider>
     </LocaleProvider>
   )
 }
+

@@ -1,0 +1,12 @@
+{
+  "name": "SouvenirAl",
+  "short_name": "SouvenirAl",
+  "description": "Özel tasarım telefon kılıfları / كفرات هاتف بتصاميم حصرية",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0da19a",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
