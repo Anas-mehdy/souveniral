@@ -163,7 +163,24 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
       body: JSON.stringify(payload)
     })
     if (!res.ok) throw new Error('Settings save failed')
-    setLocalSettings(prev => ({ ...prev, ...payload }))
+    const data = await res.json()
+    if (data.settings) {
+      setLocalSettings(data.settings)
+      if (data.settings.hero_slides) setHeroSlides(data.settings.hero_slides)
+      if (data.settings.ticker_items) setTickerItems(data.settings.ticker_items)
+      if (data.settings.trust_features) setTrustFeatures(data.settings.trust_features)
+      if (data.settings.promo_banner) {
+        setPromoPreAr(data.settings.promo_banner.pre_ar)
+        setPromoTitleAr(data.settings.promo_banner.title_ar)
+        setPromoDescAr(data.settings.promo_banner.desc_ar)
+        setPromoBtnAr(data.settings.promo_banner.btn_ar)
+      }
+      if (data.settings.announcement_top_ar) {
+        setAnnouncementTopAr(data.settings.announcement_top_ar)
+      }
+    } else {
+      setLocalSettings(prev => ({ ...prev, ...payload }))
+    }
   }
 
   // Handle customer gallery photo uploading

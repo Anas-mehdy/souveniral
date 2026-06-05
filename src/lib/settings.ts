@@ -1,5 +1,6 @@
 import { supabaseAdmin } from './supabase'
 import path from 'path'
+import { translateText } from './translation'
 
 export interface HeroSlide {
   title_tr: string
@@ -161,11 +162,170 @@ export async function getStoreSettings(): Promise<StoreSettings> {
   return DEFAULT_SETTINGS as StoreSettings
 }
 
-export async function updateStoreSettings(settings: Partial<StoreSettings>): Promise<void> {
-  if (typeof window !== 'undefined') return
+export async function updateStoreSettings(settings: Partial<StoreSettings>): Promise<StoreSettings> {
+  if (typeof window !== 'undefined') {
+    return DEFAULT_SETTINGS as StoreSettings
+  }
 
   const current = await getStoreSettings()
   const updated = { ...current, ...settings }
+
+  // Auto-translate updated Arabic fields to Turkish using MyMemory translation API
+  
+  // 1. Top Announcement
+  if (settings.announcement_top_ar !== undefined && settings.announcement_top_ar !== current.announcement_top_ar) {
+    try {
+      updated.announcement_top_tr = await translateText(settings.announcement_top_ar, 'ar', 'tr')
+    } catch (err) {
+      console.error('Failed to translate top announcement:', err)
+    }
+  }
+
+  // 2. Ticker Items
+  if (settings.ticker_items !== undefined) {
+    const translatedItems = []
+    for (let i = 0; i < settings.ticker_items.length; i++) {
+      const item = settings.ticker_items[i]
+      const currentItem = current.ticker_items?.[i]
+      
+      let tr = item.tr
+      // If ar changed or it is a new item, auto-translate
+      if (!currentItem || item.ar !== currentItem.ar) {
+        try {
+          tr = await translateText(item.ar, 'ar', 'tr')
+        } catch (err) {
+          console.error(`Failed to translate ticker item #${i}:`, err)
+        }
+      }
+      translatedItems.push({ ar: item.ar, tr })
+    }
+    updated.ticker_items = translatedItems
+  }
+
+  // 3. Hero Slides
+  if (settings.hero_slides !== undefined) {
+    const translatedSlides = []
+    for (let i = 0; i < settings.hero_slides.length; i++) {
+      const slide = settings.hero_slides[i]
+      const currentSlide = current.hero_slides?.[i]
+      
+      let title_tr = slide.title_tr
+      let desc_tr = slide.desc_tr
+      let btn_tr = slide.btn_tr
+      
+      if (!currentSlide || slide.title_ar !== currentSlide.title_ar) {
+        try {
+          title_tr = await translateText(slide.title_ar, 'ar', 'tr')
+        } catch (err) {
+          console.error(`Failed to translate hero title #${i}:`, err)
+        }
+      }
+      if (!currentSlide || slide.desc_ar !== currentSlide.desc_ar) {
+        try {
+          desc_tr = await translateText(slide.desc_ar, 'ar', 'tr')
+        } catch (err) {
+          console.error(`Failed to translate hero desc #${i}:`, err)
+        }
+      }
+      if (!currentSlide || slide.btn_ar !== currentSlide.btn_ar) {
+        try {
+          btn_tr = await translateText(slide.btn_ar, 'ar', 'tr')
+        } catch (err) {
+          console.error(`Failed to translate hero btn #${i}:`, err)
+        }
+      }
+      
+      translatedSlides.push({
+        ...slide,
+        title_tr,
+        desc_tr,
+        btn_tr
+      })
+    }
+    updated.hero_slides = translatedSlides
+  }
+
+  // 4. Trust Features
+  if (settings.trust_features !== undefined) {
+    const translatedFeatures = []
+    for (let i = 0; i < settings.trust_features.length; i++) {
+      const feat = settings.trust_features[i]
+      const currentFeat = current.trust_features?.[i]
+      
+      let title_tr = feat.title_tr
+      let desc_tr = feat.desc_tr
+      
+      if (!currentFeat || feat.title_ar !== currentFeat.title_ar) {
+        try {
+          title_tr = await translateText(feat.title_ar, 'ar', 'tr')
+        } catch (err) {
+          console.error(`Failed to translate trust title #${i}:`, err)
+        }
+      }
+      if (!currentFeat || feat.desc_ar !== currentFeat.desc_ar) {
+        try {
+          desc_tr = await translateText(feat.desc_ar, 'ar', 'tr')
+        } catch (err) {
+          console.error(`Failed to translate trust desc #${i}:`, err)
+        }
+      }
+      
+      translatedFeatures.push({
+        ...feat,
+        title_tr,
+        desc_tr
+      })
+    }
+    updated.trust_features = translatedFeatures
+  }
+
+  // 5. Promo Banner
+  if (settings.promo_banner !== undefined) {
+    const banner = settings.promo_banner
+    const currentBanner = current.promo_banner
+    
+    let pre_tr = banner.pre_tr
+    let title_tr = banner.title_tr
+    let desc_tr = banner.desc_tr
+    let btn_tr = banner.btn_tr
+    
+    if (!currentBanner || banner.pre_ar !== currentBanner.pre_ar) {
+      try {
+        pre_tr = await translateText(banner.pre_ar, 'ar', 'tr')
+      } catch (err) {
+        console.error('Failed to translate promo pre-title:', err)
+      }
+    }
+    if (!currentBanner || banner.title_ar !== currentBanner.title_ar) {
+      try {
+        title_tr = await translateText(banner.title_ar, 'ar', 'tr')
+      } catch (err) {
+        console.error('Failed to translate promo title:', err)
+      }
+    }
+    if (!currentBanner || banner.desc_ar !== currentBanner.desc_ar) {
+      try {
+        desc_tr = await translateText(banner.desc_ar, 'ar', 'tr')
+      } catch (err) {
+        console.error('Failed to translate promo description:', err)
+      }
+    }
+    if (!currentBanner || banner.btn_ar !== currentBanner.btn_ar) {
+      try {
+        btn_tr = await translateText(banner.btn_ar, 'ar', 'tr')
+      } catch (err) {
+        console.error('Failed to translate promo button:', err)
+      }
+    }
+    
+    updated.promo_banner = {
+      ...banner,
+      pre_tr,
+      title_tr,
+      desc_tr,
+      btn_tr
+    }
+  }
 
   // 1. Try updating in Supabase
   try {
@@ -174,7 +334,7 @@ export async function updateStoreSettings(settings: Partial<StoreSettings>): Pro
       .upsert({ id: 'global', value: updated, updated_at: new Date().toISOString() })
     
     // If no error, we are good
-    if (!error) return
+    if (!error) return updated
   } catch (err) {
     // Fail silently to try file write fallback
   }
@@ -184,6 +344,7 @@ export async function updateStoreSettings(settings: Partial<StoreSettings>): Pro
     const fs = require('fs')
     const filePath = path.join(process.cwd(), 'src/lib/settings-store.json')
     fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), 'utf-8')
+    return updated
   } catch (err) {
     throw new Error('Failed to update storefront settings on disk: ' + (err as Error).message)
   }

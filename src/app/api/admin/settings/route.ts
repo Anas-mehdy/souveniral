@@ -17,8 +17,8 @@ export async function PATCH(req: NextRequest) {
 
   try {
     const body = await req.json()
-    await updateStoreSettings(body)
-    return NextResponse.json({ ok: true })
+    const updatedSettings = await updateStoreSettings(body)
+    return NextResponse.json({ ok: true, settings: updatedSettings })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
