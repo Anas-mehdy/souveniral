@@ -46,7 +46,7 @@ export function ProductsClient({ products, categories, total, page, limit, curre
       <h1 className="text-3xl font-black text-gray-800 mb-6">{t.allProducts}</h1>
 
       {/* Search + filter bar */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-8">
+      <div className="flex flex-col sm:flex-row gap-3 mb-8 w-full max-w-full">
         <div className="relative flex-1">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input
@@ -61,7 +61,7 @@ export function ProductsClient({ products, categories, total, page, limit, curre
         <select
           value={currentCategory ?? ''}
           onChange={e => navigate({ category: e.target.value || undefined, search })}
-          className="w-full sm:w-auto px-4 py-3 border border-gray-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#0da19a] bg-white text-gray-800 max-w-full"
+          className="w-full sm:w-auto px-4 py-3 border border-gray-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#0da19a] bg-white text-gray-800 max-w-full min-w-0 truncate"
         >
           <option value="">{t.allProducts}</option>
           {categories.flatMap(c => {
@@ -87,7 +87,7 @@ export function ProductsClient({ products, categories, total, page, limit, curre
 
       {/* Subcategory Pills */}
       {activeParent && activeParent.subcategories && activeParent.subcategories.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-8 pb-3 border-b border-gray-100">
+        <div className="flex flex-wrap gap-2 mb-8 pb-3 border-b border-gray-100 max-w-full">
           <button
             onClick={() => navigate({ category: activeParent!.slug, search })}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -132,7 +132,7 @@ export function ProductsClient({ products, categories, total, page, limit, curre
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-10">
+        <div className="flex flex-wrap justify-center gap-2 mt-10 max-w-full">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
             <button
               key={n}

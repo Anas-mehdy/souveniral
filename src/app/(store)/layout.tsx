@@ -14,7 +14,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     <LocaleProvider>
       <CartProvider>
         <Navbar settings={settings} categories={categories} />
-        <main className="max-w-7xl mx-auto px-4 py-8">
+        <main className="w-full max-w-7xl mx-auto px-4 py-8 overflow-x-hidden">
           {children}
         </main>
 

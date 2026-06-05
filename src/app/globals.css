@@ -8,12 +8,18 @@
   --color-slate-border: #f0f0f0;
 }
 
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+
 /* Apply professional bilingual typography: Poppins for Turkish/English, Cairo for Arabic */
 body {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: #ffffff;
   color: var(--color-charcoal);
-  overflow-x: hidden;
 }
 
 [dir="rtl"], [dir="rtl"] * {
