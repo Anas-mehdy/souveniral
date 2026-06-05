@@ -61,7 +61,7 @@ export function ProductsClient({ products, categories, total, page, limit, curre
         <select
           value={currentCategory ?? ''}
           onChange={e => navigate({ category: e.target.value || undefined, search })}
-          className="px-4 py-3 border border-gray-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#0da19a] bg-white text-gray-800"
+          className="w-full sm:w-auto px-4 py-3 border border-gray-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#0da19a] bg-white text-gray-800 max-w-full"
         >
           <option value="">{t.allProducts}</option>
           {categories.flatMap(c => {

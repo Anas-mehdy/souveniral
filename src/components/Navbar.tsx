@@ -37,7 +37,7 @@ export function Navbar({ settings, categories = [] }: { settings?: StoreSettings
   return (
     <nav className="bg-white border-b border-gray-100 sticky top-0 z-40 font-sans">
       {/* Announcement top header */}
-      <div className="relative overflow-hidden bg-[#0da19a] text-white text-[10px] sm:text-xs font-bold py-1.5 flex select-none" dir="ltr">
+      <div className="relative w-full overflow-hidden bg-[#0da19a] text-white text-[10px] sm:text-xs font-bold py-1.5 flex select-none" dir="ltr">
         <style>{`
           @keyframes marquee-to-left {
             0% { transform: translateX(0); }
