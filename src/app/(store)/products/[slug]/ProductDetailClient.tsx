@@ -1,7 +1,7 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { Product } from '@/lib/types'
 import { useLocale } from '@/components/LocaleProvider'
 import { useCart } from '@/components/CartProvider'
@@ -57,6 +57,18 @@ export function ProductDetailClient({ product, similarProducts = [] }: { product
       setSelectedBrand(uniqueBrands[0])
     }
   })
+
+  // Track product page view event
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).trackAnalyticsEvent) {
+      (window as any).trackAnalyticsEvent('view_product', {
+        product_id: product.id,
+        slug: product.slug,
+        name: product.name_ar,
+        price: product.price
+      })
+    }
+  }, [product])
 
   // Quantity adjuster
   const adjustQuantity = (amount: number) => {
@@ -117,6 +129,17 @@ export function ProductDetailClient({ product, similarProducts = [] }: { product
       custom_details: product.custom_type === 'image' ? customDetails : null,
       custom_fields_values: Object.keys(customFieldsValues).length > 0 ? customFieldsValues : null
     }, quantity)
+
+    // Track add to cart event
+    if (typeof window !== 'undefined' && (window as any).trackAnalyticsEvent) {
+      (window as any).trackAnalyticsEvent('add_to_cart', {
+        product_id: product.id,
+        slug: product.slug,
+        name: product.name_ar,
+        price: product.price,
+        quantity
+      })
+    }
   }
 
   // Handle file uploads for multiple custom fields

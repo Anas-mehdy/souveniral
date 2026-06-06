@@ -6,7 +6,8 @@ import type { Category, Product, ProductImage, ProductModel, CustomField } from 
 import { 
   Plus, Search, Edit2, Image as ImageIcon, Smartphone, Trash2, 
   LogOut, Layers, Package, Eye, EyeOff, AlertTriangle, X, Check, Loader2,
-  ShoppingBag, Clock, Truck, CheckCircle2, Download, ExternalLink, UploadCloud
+  ShoppingBag, Clock, Truck, CheckCircle2, Download, ExternalLink, UploadCloud,
+  TrendingUp, Globe, Monitor, MousePointer, Users, BarChart2
 } from 'lucide-react'
 import { Order } from '@/lib/orders'
 
@@ -42,7 +43,35 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   
   // Navigation tabs
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'orders'>('products')
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'orders' | 'analytics'>('products')
+
+  // Analytics States
+  const [analyticsData, setAnalyticsData] = useState<any>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsRange, setAnalyticsRange] = useState<'today' | 'yesterday' | '7d' | '30d'>('30d')
+
+  async function fetchAnalytics(range: string) {
+    setAnalyticsLoading(true)
+    try {
+      const res = await fetch(`/api/admin/analytics?range=${range}`)
+      if (res.ok) {
+        const data = await res.json()
+        setAnalyticsData(data)
+      } else {
+        console.error('Failed to fetch analytics')
+      }
+    } catch (err) {
+      console.error('Network error fetching analytics:', err)
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      fetchAnalytics(analyticsRange)
+    }
+  }, [analyticsRange, activeTab])
 
   // Orders Management States
   const [orders, setOrders] = useState<Order[]>([])
@@ -112,10 +141,12 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
     }
   }
 
-  function handleTabChange(tab: 'products' | 'categories' | 'orders') {
+  function handleTabChange(tab: 'products' | 'categories' | 'orders' | 'analytics') {
     setActiveTab(tab)
     if (tab === 'orders') {
       fetchOrders()
+    } else if (tab === 'analytics') {
+      fetchAnalytics(analyticsRange)
     }
   }
 
@@ -808,6 +839,14 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
           >
             إدارة الطلبات / Sipariş Yönetimi
           </button>
+          <button
+            onClick={() => handleTabChange('analytics')}
+            className={`py-3 px-4 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
+              activeTab === 'analytics' ? 'border-indigo-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            التحليلات والتقارير / Analiz ve Raporlar
+          </button>
         </div>
 
         {/* Tab 1: Products */}
@@ -1299,6 +1338,254 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Tab 4: Analytics */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-8">
+            {/* Analytics Toolbar */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+              <div>
+                <h3 className="text-base font-black text-indigo-400">لوحة تحليلات الزوار / Analiz ve Rapor Paneli</h3>
+                <p className="text-xs text-slate-550 text-slate-400 mt-1">تعقب زيارات الموقع ومسارات التحويل بشكل حي ومباشر</p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-bold">النطاق الزمني:</span>
+                <select
+                  value={analyticsRange}
+                  onChange={(e: any) => setAnalyticsRange(e.target.value)}
+                  className="px-3 py-1.5 bg-slate-950 border border-slate-800 text-xs font-semibold text-white rounded-lg focus:outline-none focus:border-indigo-500 cursor-pointer"
+                >
+                  <option value="today">اليوم / Bugün</option>
+                  <option value="yesterday">أمس / Dün</option>
+                  <option value="7d">آخر 7 أيام / Son 7 Gün</option>
+                  <option value="30d">آخر 30 يوم / Son 30 Gün</option>
+                </select>
+              </div>
+            </div>
+
+            {analyticsLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-slate-900 border border-slate-800 rounded-2xl gap-3">
+                <Loader2 className="animate-spin text-indigo-400" size={32} />
+                <span className="text-xs text-slate-400 font-semibold">جاري تحميل البيانات الإحصائية...</span>
+              </div>
+            ) : analyticsData ? (
+              <>
+                {/* KPIs Grid */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col justify-between hover:border-indigo-500/30 transition-all duration-300">
+                    <div className="flex justify-between items-center text-slate-500">
+                      <span className="text-xs font-bold">الزوار الفريدين / Tekil Ziyaretçi</span>
+                      <Users size={16} className="text-indigo-400" />
+                    </div>
+                    <div className="mt-4">
+                      <h3 className="text-2xl font-black text-white">{analyticsData.metrics.visitors}</h3>
+                      <p className="text-[10px] text-slate-500 mt-1">الأجهزة الفريدة التي تصفحت الموقع</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col justify-between hover:border-cyan-500/30 transition-all duration-300">
+                    <div className="flex justify-between items-center text-slate-500">
+                      <span className="text-xs font-bold">مشاهدات الصفحات / Sayfa Görüntüleme</span>
+                      <BarChart2 size={16} className="text-cyan-400" />
+                    </div>
+                    <div className="mt-4">
+                      <h3 className="text-2xl font-black text-white">{analyticsData.metrics.pageviews}</h3>
+                      <p className="text-[10px] text-slate-500 mt-1">إجمالي التصفح والنقرات بالمتجر</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col justify-between hover:border-emerald-500/30 transition-all duration-300">
+                    <div className="flex justify-between items-center text-slate-500">
+                      <span className="text-xs font-bold">المبيعات الناجحة / Başarılı Sipariş</span>
+                      <ShoppingBag size={16} className="text-emerald-400" />
+                    </div>
+                    <div className="mt-4">
+                      <h3 className="text-2xl font-black text-white">{analyticsData.metrics.purchases}</h3>
+                      <p className="text-[10px] text-slate-500 mt-1">الطلبات المكتملة في هذا النطاق</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col justify-between hover:border-amber-500/30 transition-all duration-300">
+                    <div className="flex justify-between items-center text-slate-500">
+                      <span className="text-xs font-bold">معدل التحويل / Dönüşüm Oranı</span>
+                      <TrendingUp size={16} className="text-amber-400" />
+                    </div>
+                    <div className="mt-4">
+                      <h3 className="text-2xl font-black text-white">{analyticsData.metrics.conversionRate}%</h3>
+                      <p className="text-[10px] text-slate-500 mt-1">نسبة الشراء مقارنة بإجمالي الزوار</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Graph & Funnel */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Graph */}
+                  <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-xs font-bold text-slate-350 text-slate-300 uppercase tracking-widest">معدل الزيارات وتصفح الصفحات / Trafik Grafiği</h4>
+                      <div className="flex gap-4 text-[10px] font-bold">
+                        <span className="flex items-center gap-1.5 text-cyan-450 text-cyan-400">
+                          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400/20 border border-cyan-400" />
+                          مشاهدات الصفحات
+                        </span>
+                        <span className="flex items-center gap-1.5 text-indigo-450 text-indigo-400">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-400/20 border border-indigo-400" />
+                          الزوار الفريدين
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <SVGChart 
+                      labels={analyticsData.chart.labels}
+                      series1={analyticsData.chart.pageviews}
+                      series2={analyticsData.chart.visitors}
+                      label1="مشاهدات الصفحات"
+                      label2="الزوار الفريدين"
+                    />
+                  </div>
+
+                  {/* Funnel */}
+                  <FunnelChart funnel={analyticsData.funnel} />
+                </div>
+
+                {/* Breakdown Tables Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Top Pages */}
+                  <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-3">
+                    <h4 className="text-xs font-black text-indigo-450 text-indigo-450 text-indigo-400 uppercase tracking-widest">الصفحات الأكثر زيارة / Popüler Sayfalar</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-slate-400 text-right dir-rtl font-sans">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-500 font-bold">
+                            <th className="pb-2 text-right">رابط الصفحة</th>
+                            <th className="pb-2 text-center">المشاهدات</th>
+                            <th className="pb-2 text-center">الزيارات الفريدة</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                          {analyticsData.breakdowns.pages.map((p: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-slate-950/20">
+                              <td className="py-2.5 font-mono text-left select-all text-slate-300 truncate max-w-xs">{p.path}</td>
+                              <td className="py-2.5 text-center text-white font-bold">{p.views}</td>
+                              <td className="py-2.5 text-center">{p.unique}</td>
+                            </tr>
+                          ))}
+                          {analyticsData.breakdowns.pages.length === 0 && (
+                            <tr>
+                              <td colSpan={3} className="text-center py-4 text-slate-650 text-slate-500">لا توجد بيانات</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Top Traffic Sources */}
+                  <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-3">
+                    <h4 className="text-xs font-black text-indigo-450 text-indigo-400 uppercase tracking-widest">مصادر الزيارات / Trafik Kaynakları</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-slate-400 text-right dir-rtl font-sans">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-500 font-bold">
+                            <th className="pb-2 text-right">المصدر</th>
+                            <th className="pb-2 text-center">عدد الزيارات</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                          {analyticsData.breakdowns.referrers.map((r: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-slate-950/20">
+                              <td className="py-2.5 font-semibold text-slate-350 text-slate-350 text-slate-300">{r.name}</td>
+                              <td className="py-2.5 text-center text-white font-bold">{r.visits}</td>
+                            </tr>
+                          ))}
+                          {analyticsData.breakdowns.referrers.length === 0 && (
+                            <tr>
+                              <td colSpan={2} className="text-center py-4 text-slate-650 text-slate-500">لا توجد بيانات</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Top Countries */}
+                  <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-3">
+                    <h4 className="text-xs font-black text-indigo-450 text-indigo-400 uppercase tracking-widest">الدول والبلدان / Ülkeler</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-slate-400 text-right dir-rtl font-sans">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-500 font-bold">
+                            <th className="pb-2 text-right">الدولة</th>
+                            <th className="pb-2 text-center">الزيارات الفريدة</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                          {analyticsData.breakdowns.countries.map((c: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-slate-950/20">
+                              <td className="py-2.5 font-semibold text-slate-300 flex items-center gap-2">
+                                <span className="text-base">{getFlagEmoji(c.code)}</span>
+                                <span>{c.code}</span>
+                              </td>
+                              <td className="py-2.5 text-center text-white font-bold">{c.visits}</td>
+                            </tr>
+                          ))}
+                          {analyticsData.breakdowns.countries.length === 0 && (
+                            <tr>
+                              <td colSpan={2} className="text-center py-4 text-slate-650 text-slate-500">لا توجد بيانات</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Devices & Browsers */}
+                  <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4">
+                    <div>
+                      <h4 className="text-xs font-black text-indigo-450 text-indigo-450 text-indigo-400 uppercase tracking-widest mb-3">الأجهزة والمتصفحات / Cihaz ve Tarayıcı</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Devices */}
+                        <div className="space-y-2">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase">نوع الجهاز (Cihaz Tipi)</span>
+                          <div className="space-y-1">
+                            {analyticsData.breakdowns.devices.map((d: any, idx: number) => (
+                              <div key={idx} className="flex justify-between text-xs py-1 border-b border-slate-800/30">
+                                <span className="text-slate-400 flex items-center gap-1.5">
+                                  {d.name === 'mobile' ? '📱' : d.name === 'tablet' ? '📟' : '💻'}
+                                  {d.name === 'mobile' ? 'هاتف' : d.name === 'tablet' ? 'تابلت' : 'حاسوب'}
+                                </span>
+                                <span className="text-white font-bold">{d.visits}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Browsers */}
+                        <div className="space-y-2">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase">المتصفح (Tarayıcı)</span>
+                          <div className="space-y-1">
+                            {analyticsData.breakdowns.browsers.slice(0, 4).map((b: any, idx: number) => (
+                              <div key={idx} className="flex justify-between text-xs py-1 border-b border-slate-800/30">
+                                <span className="text-slate-400 truncate max-w-[80px]">{b.name}</span>
+                                <span className="text-white font-bold">{b.visits}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-10 bg-slate-900 border border-slate-800 rounded-2xl text-slate-500 text-xs">
+                فشل في تحميل التحليلات
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -2190,4 +2477,234 @@ export function DashboardClient({ initialProducts, initialCategories }: Props) {
       )}
     </div>
   )
+}
+
+// ----------------------------------------------------------------------
+// Custom SVG Area Chart & Funnel Components for Store Analytics (RTL Safe)
+// ----------------------------------------------------------------------
+
+function SVGChart({ labels, series1, series2, label1, label2 }: { labels: string[], series1: number[], series2: number[], label1: string, label2: string }) {
+  const chartHeight = 220
+  const chartWidth = 600
+  const paddingLeft = 45
+  const paddingBottom = 30
+  const paddingTop = 15
+  const paddingRight = 15
+
+  const graphHeight = chartHeight - paddingTop - paddingBottom
+  const graphWidth = chartWidth - paddingLeft - paddingRight
+
+  const n = labels.length
+  if (n === 0) return <div className="text-slate-550 text-slate-500 text-xs text-center py-10">لا توجد بيانات كافية للرسم البياني</div>
+
+  const maxVal = Math.max(...series1, ...series2, 5)
+
+  // Generate coordinates
+  const points1 = series1.map((val, i) => {
+    const x = paddingLeft + (n > 1 ? (i / (n - 1)) * graphWidth : 0)
+    const y = paddingTop + graphHeight - (val / maxVal) * graphHeight
+    return { x, y }
+  })
+
+  const points2 = series2.map((val, i) => {
+    const x = paddingLeft + (n > 1 ? (i / (n - 1)) * graphWidth : 0)
+    const y = paddingTop + graphHeight - (val / maxVal) * graphHeight
+    return { x, y }
+  })
+
+  // Build SVG path strings
+  const linePath1 = points1.length > 0 ? `M ${points1.map(p => `${p.x} ${p.y}`).join(' L ')}` : ''
+  const areaPath1 = points1.length > 0 ? `${linePath1} L ${points1[points1.length - 1].x} ${paddingTop + graphHeight} L ${points1[0].x} ${paddingTop + graphHeight} Z` : ''
+
+  const linePath2 = points2.length > 0 ? `M ${points2.map(p => `${p.x} ${p.y}`).join(' L ')}` : ''
+  const areaPath2 = points2.length > 0 ? `${linePath2} L ${points2[points2.length - 1].x} ${paddingTop + graphHeight} L ${points2[0].x} ${paddingTop + graphHeight} Z` : ''
+
+  // Grid lines
+  const gridLines = []
+  const gridCount = 4
+  for (let i = 0; i <= gridCount; i++) {
+    const y = paddingTop + (i / gridCount) * graphHeight
+    const val = Math.round(maxVal - (i / gridCount) * maxVal)
+    gridLines.push({ y, val })
+  }
+
+  // X-axis label ticks
+  const labelTicks = []
+  const step = Math.max(1, Math.floor(n / 6))
+  for (let i = 0; i < n; i += step) {
+    labelTicks.push({ x: points1[i].x, label: labels[i] })
+  }
+  if (n > 1 && (n - 1) % step !== 0) {
+    labelTicks.push({ x: points1[n - 1].x, label: labels[n - 1] })
+  }
+
+  return (
+    <div className="w-full h-64 relative bg-slate-950/40 p-4 border border-slate-800/80 rounded-2xl font-sans">
+      <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible">
+        <defs>
+          <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#0da19a" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#0da19a" stopOpacity="0.0" />
+          </linearGradient>
+          <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+
+        {/* Grid lines & Y-axis labels */}
+        {gridLines.map((line, idx) => (
+          <g key={idx}>
+            <line 
+              x1={paddingLeft} 
+              y1={line.y} 
+              x2={chartWidth - paddingRight} 
+              y2={line.y} 
+              stroke="#1e293b" 
+              strokeWidth="1" 
+              strokeDasharray={idx === gridCount ? "0" : "4 4"}
+            />
+            <text 
+              x={paddingLeft - 8} 
+              y={line.y + 4} 
+              fill="#94a3b8" 
+              fontSize="10" 
+              textAnchor="end"
+              className="font-medium"
+            >
+              {line.val}
+            </text>
+          </g>
+        ))}
+
+        {/* Areas */}
+        {areaPath1 && <path d={areaPath1} fill="url(#grad1)" />}
+        {areaPath2 && <path d={areaPath2} fill="url(#grad2)" />}
+
+        {/* Lines */}
+        {linePath1 && (
+          <path 
+            d={linePath1} 
+            fill="none" 
+            stroke="#0da19a" 
+            strokeWidth="2.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+          />
+        )}
+        {linePath2 && (
+          <path 
+            d={linePath2} 
+            fill="none" 
+            stroke="#6366f1" 
+            strokeWidth="2.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+          />
+        )}
+
+        {/* Data points dots */}
+        {points1.map((p, idx) => (
+          <circle 
+            key={`c1-${idx}`} 
+            cx={p.x} 
+            cy={p.y} 
+            r="3.5" 
+            fill="#0da19a" 
+            stroke="#0f172a" 
+            strokeWidth="1.5"
+            className="hover:r-5 cursor-pointer transition-all"
+          >
+            <title>{`${label1}: ${series1[idx]}`}</title>
+          </circle>
+        ))}
+
+        {points2.map((p, idx) => (
+          <circle 
+            key={`c2-${idx}`} 
+            cx={p.x} 
+            cy={p.y} 
+            r="3.5" 
+            fill="#6366f1" 
+            stroke="#0f172a" 
+            strokeWidth="1.5"
+            className="hover:r-5 cursor-pointer transition-all"
+          >
+            <title>{`${label2}: ${series2[idx]}`}</title>
+          </circle>
+        ))}
+
+        {/* X-axis labels */}
+        {labelTicks.map((tick, idx) => (
+          <text 
+            key={idx}
+            x={tick.x} 
+            y={chartHeight - 8} 
+            fill="#94a3b8" 
+            fontSize="9.5" 
+            textAnchor="middle"
+            className="font-medium"
+          >
+            {tick.label}
+          </text>
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+function FunnelChart({ funnel }: { funnel: any }) {
+  const visit = funnel.visit || 0
+  const viewProduct = funnel.viewProduct || 0
+  const addToCart = funnel.addToCart || 0
+  const checkoutStart = funnel.checkoutStart || 0
+  const purchase = funnel.purchase || 0
+
+  const steps = [
+    { label_ar: 'زيارة الموقع', label_tr: 'Ziyaretçi', count: visit, percent: 100, color: 'bg-slate-700/50 border border-slate-600/40' },
+    { label_ar: 'تصفح المنتجات', label_tr: 'Ürün İnceleme', count: viewProduct, percent: visit > 0 ? Math.round((viewProduct / visit) * 100) : 0, color: 'bg-indigo-650/40 border border-indigo-500/30' },
+    { label_ar: 'إضافة للسلة', label_tr: 'Sepete Ekleme', count: addToCart, percent: visit > 0 ? Math.round((addToCart / visit) * 100) : 0, color: 'bg-cyan-650/40 border border-cyan-500/30' },
+    { label_ar: 'بدء الدفع', label_tr: 'Ödeme Başlatma', count: checkoutStart, percent: visit > 0 ? Math.round((checkoutStart / visit) * 100) : 0, color: 'bg-amber-650/40 border border-amber-500/30' },
+    { label_ar: 'إتمام الطلب', label_tr: 'Sipariş Tamamlama', count: purchase, percent: visit > 0 ? Math.round((purchase / visit) * 100) : 0, color: 'bg-emerald-650/40 border border-emerald-500/30' }
+  ]
+
+  return (
+    <div className="space-y-4 bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl font-sans">
+      <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">مسار تحويل المبيعات / Dönüşüm Hunisi</h4>
+      <div className="space-y-3">
+        {steps.map((step, idx) => (
+          <div key={idx} className="space-y-1">
+            <div className="flex justify-between text-xs font-bold">
+              <span className="text-slate-350 text-slate-300">{step.label_ar} / <span className="text-slate-500 font-medium">{step.label_tr}</span></span>
+              <span className="text-white">{step.count} <span className="text-slate-400 font-normal">({step.percent}%)</span></span>
+            </div>
+            <div className="w-full bg-slate-950 border border-slate-850 h-6 rounded-lg overflow-hidden flex relative items-center">
+              <div 
+                className={`h-full ${step.color} transition-all duration-500 rounded-lg`} 
+                style={{ width: `${step.percent}%` }}
+              />
+              {step.percent > 5 && (
+                <span className="absolute left-2 text-[10px] font-black text-white drop-shadow">
+                  {step.percent}%
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function getFlagEmoji(countryCode: string) {
+  if (countryCode === 'Unknown' || !countryCode) return '🌐'
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0))
+  try {
+    return String.fromCodePoint(...codePoints)
+  } catch (e) {
+    return '🌐'
+  }
 }

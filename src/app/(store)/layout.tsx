@@ -6,6 +6,7 @@ import { getStoreSettings } from '@/lib/settings'
 import { getCategories } from '@/lib/db'
 import { Footer } from '@/components/Footer'
 import { WhatsAppButton } from '@/components/WhatsAppButton'
+import { AnalyticsTracker } from '@/components/AnalyticsTracker'
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const settings = await getStoreSettings()
@@ -14,6 +15,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   return (
     <LocaleProvider>
       <CartProvider>
+        <AnalyticsTracker />
         <Navbar settings={settings} categories={categories} />
         <main className="w-full max-w-7xl mx-auto px-4 py-8 overflow-x-hidden">
           {children}

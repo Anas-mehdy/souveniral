@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useCart } from './CartProvider'
 import { useLocale } from './LocaleProvider'
@@ -100,6 +100,17 @@ export function CheckoutDrawer({ open, onClose }: Props) {
   const [orderCompleted, setOrderCompleted] = useState(false)
   const [orderCode, setOrderCode] = useState('')
 
+  // Track checkout start event
+  useEffect(() => {
+    if (open && typeof window !== 'undefined' && (window as any).trackAnalyticsEvent) {
+      (window as any).trackAnalyticsEvent('checkout_start', {
+        total_items: totalItems,
+        total_price: totalPrice,
+        discount: discount
+      })
+    }
+  }, [open, totalItems, totalPrice, discount])
+
   // Form Fields
   const [email, setEmail] = useState('')
   const [emailMarketing, setEmailMarketing] = useState(true)
@@ -169,6 +180,25 @@ export function CheckoutDrawer({ open, onClose }: Props) {
 
       if (res.ok) {
         const order = await res.json()
+        
+        // Track purchase event
+        if (typeof window !== 'undefined' && (window as any).trackAnalyticsEvent) {
+          (window as any).trackAnalyticsEvent('purchase', {
+            order_code: order.order_code,
+            total_price: totalPrice,
+            discount: discount,
+            grand_total: grandTotal,
+            items: cartItems.map(item => ({
+              id: item.id,
+              slug: item.slug,
+              price: item.price,
+              quantity: item.quantity,
+              brand: item.brand,
+              model: item.model
+            }))
+          })
+        }
+
         setOrderCode(order.order_code)
         setOrderCompleted(true)
         clearCart()
