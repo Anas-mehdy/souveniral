@@ -9,6 +9,7 @@ export interface HeroSlide {
   desc_ar: string
   btn_tr: string
   btn_ar: string
+  image_url?: string
 }
 
 export interface TickerItem {

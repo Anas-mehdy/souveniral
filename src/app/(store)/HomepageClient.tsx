@@ -19,7 +19,8 @@ import {
   X, 
   Loader2, 
   Plus, 
-  Trash2 
+  Trash2,
+  UploadCloud
 } from 'lucide-react'
 
 interface Props {
@@ -76,6 +77,7 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
   const [editingHero, setEditingHero] = useState(false)
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(localSettings.hero_slides)
   const [savingHero, setSavingHero] = useState(false)
+  const [heroUploading, setHeroUploading] = useState<Record<number, boolean>>({})
 
   // Ticker Announcements Edit State
   const [editingTicker, setEditingTicker] = useState(false)
@@ -332,6 +334,45 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
     }
   }
 
+  // Hero Slide Image Upload Handlers
+  async function handleHeroImageUpload(e: React.ChangeEvent<HTMLInputElement>, idx: number) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setHeroUploading(prev => ({ ...prev, [idx]: true }))
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.url) {
+          setHeroSlides(prev => {
+            const updated = [...prev]
+            updated[idx] = { ...updated[idx], image_url: data.url }
+            return updated
+          })
+        }
+      } else {
+        const err = await res.json()
+        alert('Upload failed: ' + (err.error || 'Unknown error'))
+      }
+    } catch (err) {
+      alert('Network error')
+    } finally {
+      setHeroUploading(prev => ({ ...prev, [idx]: false }))
+    }
+  }
+
+  function handleRemoveHeroImage(idx: number) {
+    setHeroSlides(prev => {
+      const updated = [...prev]
+      const nextSlide = { ...updated[idx] }
+      delete nextSlide.image_url
+      updated[idx] = nextSlide
+      return updated
+    })
+  }
+
   // 2. Save Hero Slideshow Settings
   const handleSaveHero = async () => {
     setSavingHero(true)
@@ -417,29 +458,47 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
 
       {/* ==================== 1. HERO SLIDESHOW SECTION ==================== */}
       <section className="relative rounded-3xl overflow-hidden shadow-xl bg-gradient-to-br from-[#0da19a] to-slate-900 text-white h-[380px] md:h-[440px] flex items-center p-8 md:p-16 transition-all duration-700 group/hero">
-        <div className="absolute inset-0 bg-black/10 z-0"></div>
-        <div className="relative z-10 max-w-xl space-y-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/10">
-            <Sparkles size={12} className="text-amber-300" />
-            <span>{locale === 'ar' ? 'تصاميم حصرية ومميزة' : 'En Çok Satan Tasarımlar'}</span>
+        {currentHero.image_url && (
+          <Image
+            src={currentHero.image_url}
+            alt={currentHeroTitle || 'Hero Slide'}
+            fill
+            priority
+            className="object-cover z-0 transition-opacity duration-700"
+          />
+        )}
+        <div className={`absolute inset-0 z-0 ${currentHero.image_url && (currentHeroTitle || currentHeroDesc || currentHeroBtn) ? 'bg-black/35' : 'bg-black/10'}`}></div>
+
+        {(currentHeroTitle || currentHeroDesc || currentHeroBtn) && (
+          <div className="relative z-10 max-w-xl space-y-6">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/10">
+              <Sparkles size={12} className="text-amber-300" />
+              <span>{locale === 'ar' ? 'تصاميم حصرية ومميزة' : 'En Çok Satan Tasarımlar'}</span>
+            </div>
+
+            {currentHeroTitle && (
+              <h1 className="text-3xl md:text-5xl font-black leading-tight animate-fade-in tracking-tight">
+                {currentHeroTitle}
+              </h1>
+            )}
+
+            {currentHeroDesc && (
+              <p className="text-sm md:text-base opacity-90 leading-relaxed max-w-lg font-medium">
+                {currentHeroDesc}
+              </p>
+            )}
+
+            {currentHeroBtn && (
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-2 bg-white text-[#0da19a] font-bold px-8 py-3.5 rounded-2xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl cursor-pointer"
+              >
+                <span>{currentHeroBtn}</span>
+                <ArrowRight size={16} />
+              </Link>
+            )}
           </div>
-
-          <h1 className="text-3xl md:text-5xl font-black leading-tight animate-fade-in tracking-tight">
-            {currentHeroTitle}
-          </h1>
-
-          <p className="text-sm md:text-base opacity-90 leading-relaxed max-w-lg font-medium">
-            {currentHeroDesc}
-          </p>
-
-          <Link
-            href="/products"
-            className="inline-flex items-center gap-2 bg-white text-[#0da19a] font-bold px-8 py-3.5 rounded-2xl hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl cursor-pointer"
-          >
-            <span>{currentHeroBtn}</span>
-            <ArrowRight size={16} />
-          </Link>
-        </div>
+        )}
 
         {/* Hero edit button (Floating overlay) */}
         {showAdminControls && (
@@ -948,6 +1007,49 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
                       >
                         <Trash2 size={14} />
                       </button>
+                    )}
+                  </div>
+
+                  {/* Banner Image Upload Section */}
+                  <div className="space-y-2 pb-2 border-b border-slate-850">
+                    <label className="text-[10px] text-slate-400 font-bold uppercase block">
+                      {locale === 'ar' ? 'صورة الخلفية البانر' : 'Banner Arka Plan Resmi'}
+                    </label>
+                    
+                    {slide.image_url ? (
+                      <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 h-28 flex items-center justify-center group/hero-img">
+                        <Image
+                          src={slide.image_url}
+                          alt="Banner Preview"
+                          fill
+                          className="object-cover opacity-70 group-hover/hero-img:opacity-50 transition-opacity"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveHeroImage(idx)}
+                          className="absolute bg-red-500/80 hover:bg-red-650 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md cursor-pointer transition-colors"
+                        >
+                          {locale === 'ar' ? 'حذف الصورة' : 'Resmi Kaldır'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative rounded-xl border border-dashed border-slate-800 bg-slate-950 p-6 flex flex-col items-center justify-center text-center hover:border-slate-700 transition-colors">
+                        <UploadCloud size={24} className="text-slate-500 mb-1" />
+                        <span className="text-[11px] text-slate-400 font-semibold mb-1">
+                          {heroUploading[idx] 
+                            ? (locale === 'ar' ? 'جاري الرفع...' : 'Yükleniyor...') 
+                            : (locale === 'ar' ? 'اختر صورة للرفع' : 'Yüklemek için resim seçin')
+                          }
+                        </span>
+                        <span className="text-[9px] text-slate-650 mb-2">PNG, JPG, WebP (1920x1080 recommended)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={heroUploading[idx]}
+                          onChange={(e) => handleHeroImageUpload(e, idx)}
+                          className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                        />
+                      </div>
                     )}
                   </div>
 
