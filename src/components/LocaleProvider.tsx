@@ -16,11 +16,11 @@ export function LocaleProvider({ children, initialLocale = 'ar' }: LocaleProvide
   const [locale, setLocaleState] = useState<Locale>(initialLocale)
 
   useEffect(() => {
-    const saved = document.cookie.match(/locale=([^;]+)/)?.[1] as Locale | undefined
-    if (saved && saved !== locale && (saved === 'ar' || saved === 'tr')) {
+    const saved = document.cookie.match(/(?:^|; )locale=([^;]+)/)?.[1] as Locale | undefined
+    if (saved === 'ar' || saved === 'tr') {
       setLocaleState(saved)
     }
-  }, [locale])
+  }, [])
 
   useEffect(() => {
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
