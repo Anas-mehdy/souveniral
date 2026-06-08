@@ -470,11 +470,13 @@ export function HomepageClient({ categories, products, isAdmin = false, settings
         <div className={`absolute inset-0 z-0 ${currentHero.image_url && (currentHeroTitle || currentHeroDesc || currentHeroBtn) ? 'bg-black/35' : 'bg-black/10'}`}></div>
 
         {(currentHeroTitle || currentHeroDesc || currentHeroBtn) && (
-          <div className="relative z-10 max-w-xl space-y-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/10">
-              <Sparkles size={12} className="text-amber-300" />
-              <span>{locale === 'ar' ? 'تصاميم حصرية ومميزة' : 'En Çok Satan Tasarımlar'}</span>
-            </div>
+          <div className={`relative z-10 max-w-xl space-y-6 ${(!currentHeroTitle && !currentHeroDesc) ? 'self-end mb-4' : ''}`}>
+            {currentHeroTitle && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/10">
+                <Sparkles size={12} className="text-amber-300" />
+                <span>{locale === 'ar' ? 'تصاميم حصرية ومميزة' : 'En Çok Satan Tasarımlar'}</span>
+              </div>
+            )}
 
             {currentHeroTitle && (
               <h1 className="text-3xl md:text-5xl font-black leading-tight animate-fade-in tracking-tight">
