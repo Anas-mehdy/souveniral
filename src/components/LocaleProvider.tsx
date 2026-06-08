@@ -7,13 +7,20 @@ const LocaleCtx = createContext<{
   setLocale: (l: Locale) => void
 }>({ locale: 'ar', setLocale: () => {} })
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('ar')
+interface LocaleProviderProps {
+  children: React.ReactNode
+  initialLocale?: Locale
+}
+
+export function LocaleProvider({ children, initialLocale = 'ar' }: LocaleProviderProps) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale)
 
   useEffect(() => {
     const saved = document.cookie.match(/locale=([^;]+)/)?.[1] as Locale | undefined
-    if (saved === 'ar' || saved === 'tr') setLocaleState(saved)
-  }, [])
+    if (saved && saved !== locale && (saved === 'ar' || saved === 'tr')) {
+      setLocaleState(saved)
+    }
+  }, [locale])
 
   useEffect(() => {
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
